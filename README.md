@@ -42,6 +42,17 @@ Source-only configurations fit preprocessing and select checkpoints using source
 
 Run outputs are written locally and ignored by Git. Exact manuscript numbers cannot be reconstructed from this repository alone: licensed datasets, local feature caches, and saved trajectories are not redistributed. Retraining requires the documented seeds and software environment; stochastic training can yield different numbers. The manuscript tables and figures are not part of this code repository.
 
+### Figure rendering from local summaries
+
+The code-only figure utilities are in `scripts/figures/`. The result plotter requires the locally generated `C1_EQUAL_SUBJECT_PRIMARY.csv`, `C1_CANDIDATE_BUDGET_SUMMARY.csv`, `C2_MATCHED_STATS.csv`, `C3_DANN_STATS.csv`, `PER_CLASS_CANONICAL.csv`, and `CANONICAL_RESULT_SUMMARY.csv` in one directory. These derived result files are not distributed here.
+
+```bash
+python scripts/figures/plot_result_figures.py --data-dir path/to/local/summaries --output-dir path/to/figures
+python scripts/figures/draw_contrast_flow.py --output-prefix path/to/figures/fig_contrast_flow
+```
+
+The plotter reads the summary values without retraining models or recomputing metrics; it writes vector PDFs and PNG previews. The flow diagram has no data dependency.
+
 ## License
 
 Original author-written code in this repository is released under the [MIT License](LICENSE). The CDCN evaluation wrapper in `src/tac_revision/models.py` adapts methods from LibEER; its upstream copyright and MIT terms are preserved in [third-party notices](docs/THIRD_PARTY.md). Third-party libraries, benchmark implementations, and datasets remain subject to their respective licenses and terms. This repository does not relicense or redistribute SEED, SEED-IV, FACED, DEAP, LibEER, or other third-party materials. Fold manifests are experiment specifications, not dataset redistribution.
