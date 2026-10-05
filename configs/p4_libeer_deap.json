@@ -1,0 +1,23 @@
+{
+  "experiment_id": "P4_LIBEER_DEAP_SUBJECT_INDEPENDENT_PROTOCOL_BRIDGE_20261003",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "setting": "deap_sub_independent_train_val_test_setting",
+  "split_manifest": "experiments/p4_cross_dataset/P4_LIBEER_DEAP_SPLIT.json",
+  "tasks": ["valence", "arousal"],
+  "model": "DGCNN pinned class; the released DGCNN commands document DEAP subject-dependent only, so this is a subject-independent protocol reconstruction",
+  "preprocessing": "same P4 pinned-LibEER 60x32x5 trial-local de_lds cache; bounds 5 5 equality low",
+  "training": {
+    "epochs": 150,
+    "batch_size": 512,
+    "learning_rate": 0.01,
+    "optimizer": "AdamW",
+    "weight_decay": 0.0001,
+    "eps": 0.0001,
+    "sparse_l2_coefficient": 0.01,
+    "train_window_stride": 1,
+    "seed": 2024
+  },
+  "checkpoint_selector": "source-validation Macro-F1",
+  "reporting": "six held-out test subjects in one split; separate from 32-fold LOSO",
+  "no_original_DGCNN_DEAP_subject_independent_score_claim": true
+}

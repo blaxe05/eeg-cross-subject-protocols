@@ -1,0 +1,28 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p3_ta_u",
+  "method": "LibEER DannDgcnn class with explicit two-domain DANN training wrapper",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "status": "P3 TA-U comparator; no released SEED training command exists for this class",
+  "dataset": "SEED",
+  "feature": "provider_de_LDS_1s",
+  "split": "strict_11_3_1",
+  "sessions": [
+    1,
+    2,
+    3
+  ],
+  "source_train_stride": 4,
+  "target_unlabelled_stride": 4,
+  "epochs": 40,
+  "batch_size": 256,
+  "learning_rate": 0.001,
+  "domain_loss_weight": 1.0,
+  "gradient_reversal_alpha_in_library": 0.1,
+  "source_checkpoint_metric": "macro_f1",
+  "seed": 2024,
+  "rng_seed_rule": "fixed_2024_every_fold",
+  "target_label_training_access": false,
+  "target_EEG_training_access": true,
+  "primary_statistical_unit": "held_out_subject",
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

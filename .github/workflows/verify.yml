@@ -1,0 +1,20 @@
+name: Offline verification
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install offline test dependencies
+        run: python -m pip install numpy scipy pandas scikit-learn PyYAML pytest
+      - name: Verify folds and results
+        run: python scripts/verify_release.py
+      - name: Run leakage and split tests
+        run: python -m pytest tests -q

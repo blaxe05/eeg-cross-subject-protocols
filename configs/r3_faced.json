@@ -1,0 +1,76 @@
+{
+  "phase": "R3 source-only FACED temporal representation",
+  "dataset": "FACED",
+  "reference_folds": "experiments/r2_faced/predeclared_folds.json",
+  "reference_baselines": "experiments/r2d_faced/temporal_controls",
+  "seed": 20261103,
+  "subjects": 123,
+  "source_train_subjects": 110,
+  "source_validation_subjects": 12,
+  "target_subjects_per_fold": 1,
+  "normalization": "reuse exact per-fold R2D N2 source-training-fitted 0.5/99.5 percentile bounds and clipped mean/SD; no refitting, exclusions or target statistics",
+  "classes": ["anger", "disgust", "fear", "sadness", "neutral", "amusement", "inspiration", "joy", "tenderness"],
+  "sampling_rate_hz": 250,
+  "train_anchor_rule": "10 of 30 one-second anchors per trial: np.linspace(0,29,10,dtype=int); all 28 trials for each source-training subject; source validation and target use all 30 anchors",
+  "train_windows_per_source_subject": 280,
+  "contexts": {"1s": [0], "4s": [-1, 0, 1, 2]},
+  "context_edge_rule": "repeat nearest one-second window inside the same trial, exactly as frozen R2",
+  "models": {
+    "residual_tcn": {
+      "stem": "Conv1d 32->64 kernel7 stride2, GroupNorm(8), GELU",
+      "blocks": "four residual depthwise-separable kernel5 blocks, dilations 1,2,4,8; GroupNorm(8), GELU, dropout 0.2",
+      "embedding_dim": 128,
+      "pooling": "adaptive global temporal mean",
+      "head": "linear 128->9",
+      "learning_rate": 0.001
+    },
+    "multi_resolution_cnn": {
+      "stem": "Conv1d 32->48 kernel1, GroupNorm(8), GELU",
+      "parallel_kernels_samples": [13, 25, 63],
+      "parallel_kernels_ms": [52, 100, 252],
+      "branches": "depthwise Conv1d 48->48 plus pointwise 48->32, GroupNorm(8), GELU",
+      "post_fusion": "concatenate to 96; two residual depthwise-separable kernel5 blocks with dilations 1,2; stride2 temporal downsample",
+      "embedding_dim": 96,
+      "pooling": "adaptive global temporal mean",
+      "head": "linear 96->9",
+      "learning_rate": 0.001
+    },
+    "conv_transformer": {
+      "stem": "Conv1d 32->64 kernel7 stride4 then 64->96 kernel5 stride4; GroupNorm/GELU",
+      "tokens": "approximately 16 at 1s and 63 at 4s, fixed sinusoidal position encoding",
+      "encoder_layers": 2,
+      "d_model": 96,
+      "attention_heads": 4,
+      "feedforward_dim": 192,
+      "dropout": 0.2,
+      "embedding_dim": 96,
+      "pooling": "mean of temporal tokens",
+      "head": "linear 96->9",
+      "learning_rate": 0.0003
+    }
+  },
+  "training": {
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "batch_size": 256,
+    "maximum_epochs": 8,
+    "early_stopping_patience": 2,
+    "gradient_clip_norm": 5.0,
+    "loss": "ordinary nine-class cross-entropy",
+    "selection_metric": "mean balanced accuracy across exactly twelve source-validation subjects",
+    "learning_rates": "fixed per architecture above before target evaluation; no per-target architecture or learning-rate search",
+    "class_weights": "none",
+    "mixed_precision": false
+  },
+  "probes": {
+    "emotion": "source-training-only StandardScaler plus RidgeClassifier(alpha=1) on frozen source-training embeddings from the fixed 10-anchor-per-trial sample; evaluate held-out target, diagnostic only",
+    "subject_id": "source-training subjects only: nearest-centroid linear probe fitted on the first 21 trials per subject and evaluated on the remaining seven trials, ten fixed anchors per trial; target identity is never a probe class",
+    "probe_target_usage": "target embeddings and labels enter only post-checkpoint diagnostic evaluation, never model fitting or selection"
+  },
+  "trial_aggregation": "mean of all 30 saved anchor probabilities inside each original video trial",
+  "bootstrap": {"resamples": 10000, "seed": 20261104, "unit": "held-out subject"},
+  "statistical_unit": "held-out subject",
+  "optional_spatial_projection_control": "deferred unless the three mandatory paired architectures finish and a source-validation rationale is documented; no topology search",
+  "no_target_fit_or_selection": true,
+  "no_fusion_or_target_adaptation": true
+}

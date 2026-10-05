@@ -1,0 +1,28 @@
+experiment:
+  dataset: seed
+  protocol: loso-dg
+  seed: 20260928
+  validation_fraction: 0.2
+data:
+  root: data/SEED
+  feature_source: stateless_raw_de_1s
+  max_windows_per_trial: null
+features:
+  name: de
+  bands_hz:
+    delta: [1.0, 4.0]
+    theta: [4.0, 8.0]
+    alpha: [8.0, 14.0]
+    beta: [14.0, 31.0]
+    gamma: [31.0, 50.0]
+preprocessing:
+  standard_scaler: true
+  pca: null
+  feature_selection_k: null
+model:
+  name: logistic_regression
+  candidate_C: [0.1, 1.0, 10.0]
+selection_metric: balanced_accuracy
+reporting:
+  statistical_unit: held_out_subject
+  output_root: experiments/benchmark_runs

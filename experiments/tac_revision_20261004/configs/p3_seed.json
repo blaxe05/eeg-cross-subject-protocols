@@ -1,0 +1,81 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p3_seed",
+  "library": "LibEER",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "seed": 2024,
+  "rng_seed_rule": "fixed_2024_every_fold_matching_LibEER_setup_seed",
+  "dataset": "SEED",
+  "feature": "provider_de_LDS_1s",
+  "source_checkpoint_metric": "macro_f1",
+  "models": [
+    "DGCNN",
+    "HSLT",
+    "CDCN",
+    "DE_MLP"
+  ],
+  "documented_9_3_3": {
+    "sessions": [
+      1
+    ],
+    "normalization": "none",
+    "model_settings": {
+      "DGCNN": {
+        "epochs": 150,
+        "batch_size": 16,
+        "lr": 0.001,
+        "optimizer": "adamw"
+      },
+      "HSLT": {
+        "epochs": 100,
+        "batch_size": 512,
+        "lr": 0.01,
+        "optimizer": "adam_cosine"
+      },
+      "CDCN": {
+        "epochs": 300,
+        "batch_size": 128,
+        "lr": 0.001,
+        "optimizer": "adam"
+      }
+    },
+    "caveat": "One deterministic 9/3/3 LibEER split, three test subjects; CDCN SEED command typo repaired and not claimed exact."
+  },
+  "split_bridge": {
+    "sessions_loso_14_1": [
+      1
+    ],
+    "sessions_strict_11_3_1": [
+      1,
+      2,
+      3
+    ],
+    "normalization": "none",
+    "epochs": 40,
+    "train_stride": 4,
+    "batch_size": 256,
+    "model_learning_rates": {
+      "DGCNN": 0.001,
+      "HSLT": 0.01,
+      "CDCN": 0.001,
+      "DE_MLP": 0.001
+    },
+    "caveat": "Compute-controlled 40-epoch/stride-4 bridge, not the full LibEER benchmark schedule; preserve model classes and declared target access."
+  },
+  "preprocessing_bridge": {
+    "models": [
+      "DGCNN",
+      "DE_MLP"
+    ],
+    "protocol": "strict_11_3_1",
+    "alternatives": [
+      "source_zscore",
+      "per_instance_zscore"
+    ]
+  },
+  "primary_statistical_unit": "held_out_subject",
+  "oracle_status": "diagnostic_target_label_selection_only",
+  "ta_u_comparator": "P2-C full-epoch target-unlabelled SSL context; separate architecture and representation, not a matched effect",
+  "ta_l_comparator": "P2-B full-epoch target-labelled context; separate architecture and representation, B100 resubstitution",
+  "no_new_architecture": true,
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

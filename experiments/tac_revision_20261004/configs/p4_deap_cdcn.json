@@ -1,0 +1,31 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p4_deap_cdcn",
+  "dataset": "DEAP",
+  "tasks": [
+    "valence",
+    "arousal"
+  ],
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "model": "pinned LibEER CDCN 32x5x2",
+  "feature": "same pinned-LibEER DE-LDS cache as P4 DGCNN",
+  "label_rule": "bounds 5 5, exactly 5 low",
+  "strict_split": "25 train / 6 validation / 1 sealed target",
+  "bridge": "31 train / 0 validation / 1 sealed target, fixed-final comparison",
+  "checkpoint_selection_metric": "pooled_source_validation_macro_f1",
+  "target_oracle_metric": "fixed-two-class subject Balanced Accuracy, posthoc only",
+  "training": {
+    "epochs": 40,
+    "batch_size": 256,
+    "train_window_stride_within_trial": 4,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 0.005,
+    "optimizer_eps": 0.0001,
+    "rng_seed": 2024,
+    "deterministic_cudnn": true,
+    "deterministic_evaluation_seed": 2125
+  },
+  "evaluation_rng_note": "Corrected deterministic eval dropout disabled",
+  "no_architecture_changes": true,
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

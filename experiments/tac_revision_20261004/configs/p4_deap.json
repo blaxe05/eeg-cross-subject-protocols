@@ -1,0 +1,35 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p4_deap",
+  "dataset": "DEAP",
+  "tasks": [
+    "valence",
+    "arousal"
+  ],
+  "library": "LibEER",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "primary_model": "DGCNN",
+  "features": "pinned_LibEER_de_lds_1s_32x5_trial_local",
+  "label_rule": "pinned_LibEER_bounds_5_5_equal_5_is_low",
+  "strict_split": "25_source_train_6_source_validation_1_sealed_target",
+  "all_source_bridge": "31_source_train_0_validation_1_sealed_target",
+  "checkpoint_selection_metric": "pooled_source_validation_macro_f1",
+  "target_oracle_metric": "fixed_two_class_subject_balanced_accuracy_posthoc_only",
+  "one_class_subject_rule": "fixed_two_class_recall_mean_with_absent_class_recall_zero",
+  "normalization": "none; trial-local baseline subtraction, filter, DE and LDS are deterministic and use no cross-trial population fitting",
+  "training": {
+    "epochs": 40,
+    "batch_size": 256,
+    "train_window_stride_within_trial": 4,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "optimizer_eps": 0.0001,
+    "sparse_l2_coefficient": 0.01,
+    "rng_seed": 2024,
+    "deterministic_cudnn": true
+  },
+  "bridge_control": "Same model, representation, optimizer, epoch budget, batch size and train-window construction; compare fixed-final checkpoints",
+  "primary_statistical_unit": "held_out_subject",
+  "no_target_outcome_hyperparameter_tuning": true,
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

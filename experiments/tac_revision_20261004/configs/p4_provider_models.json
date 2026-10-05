@@ -1,0 +1,35 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p4_provider_models",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "source_checkpoint_metric": "pooled_source_validation_macro_f1",
+  "target_oracle_metric": "held_out_subject_balanced_accuracy_posthoc_only",
+  "SEED-IV": {
+    "feature": "provider_de_LDS_62x5_four_second_windows_all_three_sessions",
+    "models": [
+      "DGCNN",
+      "CDCN"
+    ],
+    "strict": "11_source_train_3_source_validation_1_target",
+    "bridge": "14_source_train_0_validation_1_target",
+    "epochs": 40,
+    "train_anchor_rule": "every_fourth_provider_window_within_each_original_trial",
+    "batch_size": 256,
+    "learning_rate": 0.001,
+    "normalization": "none"
+  },
+  "FACED": {
+    "feature": "validated_R2D_stateless_raw_DE_1s_32x5",
+    "model": "DGCNN",
+    "strict": "110_source_train_12_source_validation_1_target",
+    "epochs": 8,
+    "train_anchor_rule": "ten_of_thirty_per_trial_np_linspace_0_29_10",
+    "batch_size": 256,
+    "learning_rate": 0.001,
+    "normalization": "none; R2D N2 belongs to separate frozen raw-temporal family and is not reselected or refit for this DE input"
+  },
+  "rng_seed": 2024,
+  "deterministic_cudnn": true,
+  "primary_statistical_unit": "held_out_subject",
+  "no_target_outcome_tuning": true,
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

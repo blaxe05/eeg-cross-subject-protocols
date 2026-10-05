@@ -1,0 +1,52 @@
+{
+  "phase": "R1",
+  "dataset": "SEED-IV",
+  "dataset_root": "data/SEED-IV",
+  "seed": 20260930,
+  "protocol": "strict_loso_source_only_11_train_3_validation_1_target",
+  "validation_fraction": 0.2,
+  "sampling_rate_hz": 200,
+  "classes": ["neutral", "sad", "fear", "happy"],
+  "window": {
+    "anchor_seconds": 1,
+    "anchor_overlap_samples": 0,
+    "discard_trial_tail_samples": true,
+    "context_offsets": {"1": [0], "2": [0, 1], "4": [-1, 0, 1, 2]},
+    "trial_edge_rule": "repeat nearest one-second window within the same original trial",
+    "independent_prediction_unit": "held_out_subject"
+  },
+  "temporal_encoder": {
+    "architecture": "Phase-3 TemporalCNN features with four-class head",
+    "train_scale_seconds": 1,
+    "optimizer": "AdamW",
+    "learning_rates": [0.001, 0.0003],
+    "weight_decay": 0.01,
+    "dropout": 0.25,
+    "batch_size": 256,
+    "maximum_epochs": 8,
+    "early_stopping_patience": 2,
+    "gradient_clip_norm": 5.0,
+    "selection_metric": "mean of three source-validation-subject balanced accuracies",
+    "normalization": "per-channel mean and SD from all windows of eleven source-training subjects only"
+  },
+  "frozen_scales": [1, 2, 4],
+  "fusion": {
+    "modes": ["mean", "fixed", "gate"],
+    "architecture": "E60 mean/fixed-softmax-weights/384-to-32-to-3 gate pattern with four-class output head",
+    "encoder": "frozen source-only-selected one-second TemporalCNN",
+    "train_windows_per_source_subject": 3000,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 1024,
+    "maximum_epochs": 15,
+    "early_stopping_patience": 3,
+    "selection_metric": "mean of three source-validation-subject balanced accuracies"
+  },
+  "primary_comparison": {"first": "1s", "second": "4s", "endpoint": "subject_balanced_accuracy",
+                         "test": "two-sided paired Wilcoxon signed-rank"},
+  "secondary_comparison": {"first": "4s", "second": "multiscale", "endpoint": "subject_balanced_accuracy",
+                           "test": "two-sided paired Wilcoxon signed-rank"},
+  "secondary_endpoint": "subject_macro_f1",
+  "no_seed_iv_target_driven_architecture_or_scale_search": true
+}

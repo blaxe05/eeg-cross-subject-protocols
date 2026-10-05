@@ -1,0 +1,45 @@
+{
+  "experiment_id": "TAC_REVISION_20261004_p4_ta_u",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "model": "LibEER DannDgcnn with P3 two-domain training wrapper",
+  "protocol": "TA-U; unlabelled target EEG used in domain fitting; target emotion labels excluded",
+  "source_checkpoint_metric": "pooled_source_validation_macro_f1",
+  "target_oracle_metric": "held_out_subject_balanced_accuracy_posthoc_only",
+  "domain_loss_weight": 1.0,
+  "gradient_reversal_alpha_in_library": 0.1,
+  "batch_size": 256,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "optimizer_eps": 0.0001,
+  "seed": 2024,
+  "datasets": {
+    "SEED-IV": {
+      "epochs": 40,
+      "source_train_stride": 4,
+      "target_unlabelled_stride": 4,
+      "feature": "provider_de_LDS_62x5"
+    },
+    "FACED": {
+      "epochs": 8,
+      "source_train_anchors_per_trial": 10,
+      "target_unlabelled_anchors_per_trial": 10,
+      "feature": "R2D_stateless_raw_DE_32x5"
+    },
+    "DEAP-valence": {
+      "epochs": 40,
+      "source_train_stride": 4,
+      "target_unlabelled_stride": 4,
+      "feature": "pinned_LibEER_de_LDS_32x5"
+    },
+    "DEAP-arousal": {
+      "epochs": 40,
+      "source_train_stride": 4,
+      "target_unlabelled_stride": 4,
+      "feature": "pinned_LibEER_de_LDS_32x5"
+    }
+  },
+  "normalization": "none; same feature representation as paired DG-SF DGCNN",
+  "no_target_label_selection": true,
+  "no_target_outcome_coefficient_tuning": true,
+  "revision": "Labels from independent reference metadata; CDCN eval dropout disabled; historical files read-only"
+}

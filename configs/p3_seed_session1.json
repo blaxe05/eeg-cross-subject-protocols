@@ -1,0 +1,28 @@
+{
+  "experiment_id": "P3_SEED_SESSION1_SPLIT_BRIDGE_20261002",
+  "library": "LibEER",
+  "library_commit": "dddff9776dbdae21195fe320dff0a5ba61628a18",
+  "seed": 2024,
+  "rng_seed_rule": "fixed_2024_every_fold_matching_LibEER_setup_seed",
+  "dataset": "SEED",
+  "feature": "provider_de_LDS_1s",
+  "source_checkpoint_metric": "macro_f1",
+  "models": ["DGCNN", "HSLT", "CDCN", "DE_MLP"],
+  "documented_9_3_3": {
+    "sessions": [1], "normalization": "none",
+    "model_settings": {
+      "DGCNN": {"epochs": 150, "batch_size": 16, "lr": 0.001, "optimizer": "adamw"},
+      "HSLT": {"epochs": 100, "batch_size": 512, "lr": 0.01, "optimizer": "adam_cosine"},
+      "CDCN": {"epochs": 300, "batch_size": 128, "lr": 0.001, "optimizer": "adam"}
+    }
+  },
+  "split_bridge": {
+    "sessions_loso_14_1": [1], "sessions_strict_11_3_1": [1],
+    "normalization": "none", "epochs": 40, "train_stride": 4,
+    "batch_size": 256,
+    "model_learning_rates": {"DGCNN": 0.001, "HSLT": 0.01, "CDCN": 0.001, "DE_MLP": 0.001}
+  },
+  "primary_statistical_unit": "held_out_subject",
+  "purpose": "One-session strict split bridge matched to one-session 14/1 for input coverage and compute budget",
+  "no_new_architecture": true
+}

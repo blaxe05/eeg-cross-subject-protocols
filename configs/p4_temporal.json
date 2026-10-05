@@ -1,0 +1,22 @@
+{
+  "experiment_id": "P4_FROZEN_TEMPORAL_TRAJECTORIES_20261003",
+  "SEED-IV": {
+    "family": "R1 one-second TemporalCNN with frozen source-selected per-fold learning rate",
+    "source_config": "configs/r1_seed_iv.json",
+    "input": "audited raw 200Hz one-second anchors, 62 channels",
+    "epochs": 8,
+    "source_selection": "pooled source-validation Macro-F1; deliberate P4 common checkpoint rule",
+    "training": "same architecture, optimizer, normalization, source splits and selected LR as frozen R1; full eight-epoch trajectory, no early stopping"
+  },
+  "FACED": {
+    "family": "R3 ResidualTCN 4s",
+    "source_config": "configs/r3_faced.json",
+    "input": "audited raw 250Hz trial-safe 4s contexts, 32 channels, frozen per-fold R2D N2 normalization",
+    "epochs": 8,
+    "source_selection": "pooled source-validation Macro-F1; deliberate P4 common checkpoint rule",
+    "training": "same architecture, optimizer, source split, 10-anchor train sample and N2 source-fit as frozen R3; full eight-epoch trajectory, no early stopping"
+  },
+  "oracle": "posthoc target-subject Balanced Accuracy after entire source trajectory is frozen",
+  "statistical_unit": "held_out_subject",
+  "no_architecture_retuning": true
+}
