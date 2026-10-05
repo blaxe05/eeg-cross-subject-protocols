@@ -114,9 +114,8 @@ def run_fold(root: Path, data: SeedWindows, config: dict, fold: Fold, name: str,
             raise ValueError(f"No documented LibEER setting for {name}")
         settings = dict(settings)
         if name == "CDCN":
-            # Its released SEED command is invalid (actually points to SEED-IV),
-            # so this reconstructed CNN run uses the deterministic accelerated
-            # backend documented in P3_PROTOCOL_AUDIT.md.
+            # The upstream example labelled SEED points to SEED-IV. This local
+            # configuration uses deterministic accelerated convolution.
             settings["cudnn_enabled"] = True
         sessions, stride = (1,), 1
     else:
