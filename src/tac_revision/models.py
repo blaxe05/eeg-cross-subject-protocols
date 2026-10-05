@@ -1,4 +1,10 @@
-"""Correct only evaluation dropout; preserve training and checkpoint parameter names."""
+"""Correct only evaluation dropout; preserve training and checkpoint parameter names.
+
+CorrectedConvblock.forward and CorrectedCDCN.forward adapt the corresponding
+methods in LibEER/models/CDCN.py at revision dddff9776dbdae21195fe320dff0a5ba61628a18.
+LibEER copyright (c) 2024 xjtu-eeg, MIT License. The upstream permission
+notice is retained in docs/THIRD_PARTY_LICENSES/LibEER_LICENSE.txt.
+"""
 from pathlib import Path
 import sys
 import torch
