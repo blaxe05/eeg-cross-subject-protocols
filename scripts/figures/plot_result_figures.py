@@ -51,7 +51,9 @@ def task_name(row: dict[str, str]) -> str:
 
 
 def model_name(row: dict[str, str]) -> str:
-    return "ResidualTCN" if row["dataset"] == "FACED" and row["model"] == "Temporal" else row["model"]
+    if row["model"] == "Temporal":
+        return "ResidualTCN" if row["dataset"] == "FACED" else "Temporal CNN"
+    return row["model"]
 
 
 def row_name(row: dict[str, str], include_model: bool = True) -> str:
