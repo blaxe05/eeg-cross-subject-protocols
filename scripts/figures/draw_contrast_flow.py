@@ -8,6 +8,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, Rectangle
 
+plt.rcParams.update({
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Arial", "Liberation Sans", "DejaVu Sans"],
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+    "text.antialiased": True,
+})
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--output-prefix", type=Path, required=True,
                     help="Output path without extension; writes PDF and PNG")
@@ -17,7 +25,7 @@ INK, BLUE, RUST, RULE = "#202B33", "#21618A", "#B85C38", "#DDE3E7"
 
 
 def label(ax, x, y, text, **kwargs):
-    opts = {"fontsize": 7.1, "color": INK, "va": "center"}
+    opts = {"fontsize": 7.4, "color": INK, "va": "center"}
     opts.update(kwargs)
     ax.text(x, y, text, **opts)
 
@@ -40,7 +48,7 @@ fig.patch.set_facecolor("white")
 ax.set(xlim=(0, 1), ylim=(0, 1))
 ax.axis("off")
 
-label(ax, .015, .94, "a", weight="bold", fontsize=8.2)
+label(ax, .015, .94, "a", weight="bold", fontsize=8.4)
 label(ax, .052, .94, "Checkpoint choice: one saved trajectory, two selection populations")
 node(ax, .04, .79, .145, "Source training")
 node(ax, .235, .79, .145, "Saved epochs")
@@ -58,7 +66,7 @@ arrow(ax, .785, .59, .835, .59, color=RUST, dashed=True)
 label(ax, .04, .59, "Retrospective only", color=RUST)
 ax.plot([.015, .985], [.48, .48], lw=.55, color=RULE)
 
-label(ax, .015, .43, "b", weight="bold", fontsize=8.2)
+label(ax, .015, .43, "b", weight="bold", fontsize=8.4)
 label(ax, .052, .43, "Source exposure: same held-out person and fixed final epoch")
 node(ax, .07, .295, .21, "Source train", height=.14)
 node(ax, .35, .295, .22, "Fixed final epoch", height=.14)
