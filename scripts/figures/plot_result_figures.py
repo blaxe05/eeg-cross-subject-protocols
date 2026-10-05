@@ -219,26 +219,23 @@ def plot_units() -> None:
             if (r["dataset"], r["model"]) in keys]
     rows.sort(key=sort_key)
     assert len(rows) == 7
-    fig, ax = plt.subplots(figsize=(3.46, 2.55))
+    fig, ax = plt.subplots(figsize=(3.46, 2.48))
     for i, r in enumerate(rows):
-        window, trial = 100*float(r["balanced_accuracy"]), 100*float(r["trial_bacc"])
-        ax.plot([window, trial], [i, i], color="#AEB9BF", lw=1.0, zorder=2)
-        ax.scatter(window, i, s=19, marker="o", color=BLUE, edgecolor="white", lw=.3, zorder=4)
-        ax.scatter(trial, i, s=21, marker="s", color=ORANGE, edgecolor="white", lw=.3, zorder=3)
-    axes_style(ax)
+        delta = 100 * (float(r["trial_bacc"]) - float(r["balanced_accuracy"]))
+        color = BLUE if delta >= 0 else ORANGE
+        ax.hlines(i, min(0, delta), max(0, delta), color=color, linewidth=1.6, zorder=3)
+        ax.scatter(delta, i, s=23, marker="o", facecolor=color if delta >= 0 else "white",
+                   edgecolor=color, linewidth=.9, zorder=4)
+        ax.text(delta + (.17 if delta >= 0 else -.17), i, f"{delta:+.2f}",
+                ha="left" if delta >= 0 else "right", va="center", fontsize=7.0,
+                color=INK)
+    axes_style(ax, zero=True)
     ax.set_yticks(range(len(rows)), [row_name(r) for r in rows])
     ax.set_ylim(len(rows)-.5, -.5)
-    ax.set_xlabel("Balanced accuracy (%)")
-    ax.set_xlim(13, 59)
-    ax.set_xticks([20, 30, 40, 50])
-    ax.legend(handles=[
-        Line2D([], [], marker="o", color="none", markerfacecolor=BLUE,
-               markeredgecolor="white", markersize=4.5, label="Window"),
-        Line2D([], [], marker="s", color="none", markerfacecolor=ORANGE,
-               markeredgecolor="white", markersize=4.5, label="Trial"),
-    ], loc="lower center", bbox_to_anchor=(.5, -.36), ncol=2, frameon=False,
-       columnspacing=.8, handletextpad=.25)
-    fig.subplots_adjust(left=.44, right=.985, top=.98, bottom=.24)
+    ax.set_xlabel("Trial − window BAcc (percentage points)")
+    ax.set_xlim(-2.1, 6.6)
+    ax.set_xticks([-2, 0, 2, 4, 6])
+    fig.subplots_adjust(left=.44, right=.985, top=.97, bottom=.17)
     save(fig, "fig6_units")
 
 
