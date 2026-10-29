@@ -18,6 +18,14 @@ SEED preparation reads `Preprocessed_EEG/label.mat` and `ExtractedFeatures_1s/*_
 
 The preparation path has been checked against all archived SEED and SEED-IV model-facing arrays and metadata, and all 123 FACED subjects (103,320 windows), including feature arrays, labels, subjects, trials, and local window indices. All compared arrays agree exactly. This establishes preparation equivalence for the local files; it is distinct from independent authentication of a provider's files. Keep the generated arrays and audit metadata local.
 
+## DREAMER extension inputs
+
+Obtain authorized access to DREAMER from its provider ([record](https://zenodo.org/records/546113); [original paper](https://doi.org/10.1109/JBHI.2017.2688239)). The extension reads the local `DREAMER.mat` version 1.0.2 and, when present, its accompanying documentation. Embedded electrode order, sampling rate, trial counts, score ranges, finite signals, and per-person binary class support are checked before preparation. Features use the last 60 seconds of each stimulus in non-overlapping one-second windows; baseline recordings are not used. No local population-dependent preprocessing is fitted.
+
+`prepare_dreamer_extension.py` writes a local feature cache, aggregate preparation audit, and private trial-to-rating map. Do not commit them. A local checksum identifies the copy used; the currently restricted provider record does not expose anonymous file checksums, so internal checks alone are not independent authentication. Valence/arousal labels come directly from the same MAT participant/trial structure, with high strictly greater than 3 and low including 3. No trial/subject is excluded by the declared preparation.
+
+The HBUED files are not inputs to this extension. Their local sampling-rate and channel-order provenance has not been established for these controls.
+
 ## Preserved historical inputs
 
 The one-fold runners expect data beneath a local, ignored `data/` directory. The recorded runs used the following inputs:

@@ -43,3 +43,13 @@ DEAP performance is outside this quantitative scope. The read-only audit utility
 python scripts/analyze_validation_pool_size.py --run-dir /path/to/local/controls/production --output-dir /path/to/local/pool-analysis
 python scripts/figures/plot_validation_pool_size.py --summary /path/to/local/pool-analysis/validation_pool_summary.json --output-dir /path/to/local/figures
 ```
+
+## Architecture and subset replication
+
+`configs/architecture_replication.json` fixes a CDCN extension with the same outer folds, anchors, update counts, candidates, and three training seeds. CDCN uses growth rate 12, dense blocks [6,6,6], dropout 0.5, and Adam (learning rate 0.001, weight decay 0.005, epsilon 0.0001). Evaluation dropout is disabled. Hyperparameters are not selected using target outcomes. Its optimizer and regularization differ from DGCNN, limiting causal interpretation of cross-backbone score differences.
+
+The source controls use three nested-pool draws per training seed and target. Draw 0 reuses the original seed+71 pool rule. Draws 1 and 2 add 100003 times the draw index only to the subset-sampling seed. The initialization and minibatch-position streams remain fixed within seed. Draws and seeds are averaged inside targets; they are not treated as additional people.
+
+CDCN adaptation retains one encoder, classifier, discriminator, reversal coefficient, and domain-loss coefficient across arms. The source forward updates encoder BatchNorm running statistics; auxiliary forwards use those source-derived statistics without updating them. Dropout remains active in training. Pilot checks require identical encoder parameters and buffers, as well as identical final probabilities, when source-proxy inputs are replaced by real target features at zero domain loss. This declared boundary is distinct from a model that adapts BatchNorm statistics to target inputs.
+
+The extension comprises 459 CDCN checkpoint records, 270 CDCN source-draw records, 90 CDCN adaptation records, and 180 DGCNN source-draw records. `finish_architecture_replication.py` requires all 999 new records, verifies stored predictions and controls, averages source draws before target-level uncertainty, and renders local plots. It also repeats candidate-set, validation-pool, class-recall, confusion, and prediction-unit summaries. Primary and exploratory chronology remains explicit; this is an extension after inspection of the earlier DGCNN campaign, not an untouched confirmation study.

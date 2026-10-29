@@ -41,6 +41,34 @@ Settings are fixed in `configs/controlled_protocol_revision.json`. The runner ac
 
 See [Controlled experiment specification](docs/CONTROLLED_EXPERIMENTS.md) for the paired comparisons, complete 639-record scope, and interpretation limits.
 
+### Architecture and source-subset replication
+
+The fixed extension adds a CDCN replication on the same three datasets and three seeds, plus two additional source-subset draws for both backbones on SEED/SEED-IV. It reuses the completed DGCNN experiment without modifying its outputs. All new artifacts remain local.
+
+```bash
+python scripts/run_architecture_replication.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/replication --previous-run-dir /path/to/local/controls/production --model CDCN --model-checks-only --pilot
+python scripts/run_architecture_replication.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/replication --previous-run-dir /path/to/local/controls/production --model CDCN --limit-targets 1 --seeds 2031 --pilot
+python scripts/run_architecture_replication.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/replication --previous-run-dir /path/to/local/controls/production --model CDCN
+python scripts/run_architecture_replication.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/replication --previous-run-dir /path/to/local/controls/production --model DGCNN
+python scripts/finish_architecture_replication.py --run-dir /path/to/local/replication --previous-run-dir /path/to/local/controls/production --output-dir /path/to/local/replication/analysis --config configs/architecture_replication.json
+```
+
+The extension requires 999 new stage records (819 CDCN and 180 DGCNN source-draw records). Completion analysis rejects missing targets, seeds, or source draws. CDCN uses its fixed Adam configuration and source-derived BatchNorm running statistics during auxiliary forwards; the pilot checks that zero domain loss prevents auxiliary inputs from changing encoder parameters or buffers. Within each target, source draws are averaged within seed and seeds before bootstrap. Backbones use different fixed optimizers and regularization, so their paired differences are procedure-level replication evidence rather than isolated causal architecture effects.
+
+### DREAMER self-rating extension
+
+The separate DREAMER extension uses participant-rated valence and arousal, both backbones, all 23 outer targets, and three training seeds (276 trajectories). It retains every original trial, uses fixed last-60-second stateless DE features, and fixes the high/low threshold at strictly greater than 3 versus 3 or below. All folds contain 17 source-training, five source-validation, and one target person. See `configs/dreamer_checkpoint_extension.json` for the complete rule.
+
+```bash
+python scripts/prepare_dreamer_extension.py --data-dir /path/to/licensed/Dreamer --output-dir /path/to/local/dreamer/inputs
+python scripts/run_dreamer_extension.py --project-root . --features /path/to/local/dreamer/inputs/dreamer_stateless_features.npz --output-dir /path/to/local/dreamer --config configs/dreamer_checkpoint_extension.json --model DGCNN
+python scripts/run_dreamer_extension.py --project-root . --features /path/to/local/dreamer/inputs/dreamer_stateless_features.npz --output-dir /path/to/local/dreamer --config configs/dreamer_checkpoint_extension.json --model CDCN
+python scripts/analyze_dreamer_extension.py --run-dir /path/to/local/dreamer --config configs/dreamer_checkpoint_extension.json --output-dir /path/to/local/dreamer/analysis
+python scripts/figures/plot_dreamer_extension.py --summary /path/to/local/dreamer/analysis/dreamer_summary.json --output-dir /path/to/local/dreamer/analysis/figures
+```
+
+The local preparation audit and trial-to-rating mapping contain licensed data and remain outside this repository. DGCNN's 14-channel instance explicitly uses 64 maps; no 32/62-channel montage is substituted. Source-training and adaptation decompositions remain on SEED/SEED-IV. The two DREAMER tasks share participants/recordings and are not independent cohorts.
+
 The analysis refuses incomplete campaigns. It averages training seeds within each outer target before descriptive target-bootstrap resampling; overlapping source-training populations still limit the uncertainty interpretation. CUDA and the locally prepared licensed feature caches are required. The full run saves a substantial checkpoint archive, so choose an output drive with sufficient free space. All generated outputs stay local.
 
 For the DEAP provenance check only:
@@ -75,6 +103,8 @@ python scripts/figures/plot_controlled_revision.py --summary /path/to/local/cont
 ```
 
 The plotter checks complete target/seed coverage before rendering the checkpoint, source-control, adaptation, and target-distribution figures. It writes vector PDFs and PNG previews. Summary files and rendered figures stay outside this public repository.
+
+Architecture and experimental-design schematics can be generated as editable self-contained HTML and SVG with `python scripts/figures/draw_replication_design.py --output-dir /path/to/local/illustrations`. They describe source-code structure and information boundaries, not experimental results.
 
 The older code-only figure utilities are also preserved in `scripts/figures/`. The historical result plotter requires the locally generated `C1_EQUAL_SUBJECT_PRIMARY.csv`, `C1_CANDIDATE_BUDGET_SUMMARY.csv`, `C2_MATCHED_STATS.csv`, `C3_DANN_STATS.csv`, `PER_CLASS_CANONICAL.csv`, and `CANONICAL_RESULT_SUMMARY.csv` in one directory. These derived result files are not distributed here.
 
