@@ -34,6 +34,19 @@ def load_faced_panel(project: Path, data_parent: Path):
     from src.strict_eeg_benchmark.r2_data import build_window_index
     from src.tac_revision.provider_training import Panel
 
+    portable = project / "experiments/controlled_protocol_revision/faced_features.npz"
+    frozen = project / "experiments/r2d_faced/cache/de_5e82d3fbcad53225.npy"
+    if not frozen.exists() and portable.exists():
+        with np.load(portable, allow_pickle=False) as z:
+            if (str(z["status"]) != "complete"
+                    or str(z["method_id"]) != "faced_stateless_welch_de_float32_boundary_v1"
+                    or z["x"].shape != (103320, 32, 5)
+                    or len(set(z["subject"])) != 123 or len(set(z["trial"])) != 3444
+                    or not np.isfinite(z["x"]).all()):
+                raise AssertionError("Portable FACED cache is incomplete or has a different feature rule")
+            return Panel(z["x"].copy(), z["y"].copy(), z["subject"].copy(), z["trial"].copy(),
+                         z["local_window"].copy(), 32, 9, str(portable.relative_to(project)))
+
     dataset = FACEDDataset(data_parent / "data/FACED",
                            project / "artifacts/audits/faced_manifest.json")
     index = build_window_index(dataset, project / "artifacts/audits/faced_trials.csv")

@@ -1,6 +1,6 @@
 # Cross-subject EEG emotion recognition: evaluation protocols
 
-Code and fixed experiment specifications for a study of evaluation protocols in cross-subject EEG emotion recognition on SEED, SEED-IV, FACED, and DEAP. The repository supports reproduction of source-subject allocation, checkpoint selection, target-data access, preprocessing, and subject-level evaluation. Licensed datasets and previously generated results are not distributed.
+Code and fixed experiment specifications for controlled evaluation studies in cross-subject EEG emotion recognition on SEED, SEED-IV, and FACED. The repository supports reproduction of source-subject allocation, checkpoint selection, target-data access, preprocessing, and subject-level evaluation. Historical DEAP utilities remain for provenance; DEAP quantitative results are excluded from the revised submission because local rating sources could not be independently authenticated. Licensed datasets and previously generated results are not distributed.
 
 ## Repository contents
 
@@ -15,7 +15,7 @@ The repository excludes raw EEG, provider feature arrays, the licensed DEAP rati
 
 ### Offline verification
 
-Python 3.13 was used for the current checks. Create an environment and install the requirements appropriate to the intended task. The lightweight verification path needs NumPy, SciPy, scikit-learn, pandas, PyYAML, and pytest; model training additionally needs PyTorch and PyTorch Geometric.
+Python 3.13 was used for the current checks. The controlled reruns use Python 3.13.11, NumPy 2.2.6, SciPy 1.16.0, scikit-learn 1.7.0, and PyTorch 2.7.1 with CUDA 12.8. Create an environment and install the requirements appropriate to the intended task. The lightweight verification path needs NumPy, SciPy, scikit-learn, pandas, PyYAML, and pytest; model training additionally needs PyTorch and PyTorch Geometric. Reading the local DEAP `.xls` audit workbook requires xlrd.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -26,6 +26,30 @@ python -m pytest tests -q
 The offline checks validate fixed folds and leakage guards without accessing EEG recordings. The repository contains the code and specifications, but no published result CSVs.
 
 ### Full retraining
+
+The controlled experiment runner uses three fixed training seeds and separates checkpoint selection, source-person composition, available examples, optimizer exposure, and unlabelled target input under a fixed adaptation objective:
+
+```bash
+python scripts/run_controlled_revision.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/controls --pilot --limit-targets 1 --seeds 2031
+python scripts/verify_controlled_revision.py --run-dir /path/to/local/controls/pilot
+python scripts/run_controlled_revision.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/controls
+python scripts/verify_controlled_revision.py --run-dir /path/to/local/controls/production
+python scripts/analyze_controlled_revision.py --run-dir /path/to/local/controls/production --output-dir /path/to/local/controls/analysis
+```
+
+Settings are fixed in `configs/controlled_protocol_revision.json`. The runner accepts the public `folds/FOLD_MANIFEST.csv` when historical private diagnostics are absent. It uses fixed-size batches and update budgets; its checkpoint baseline is the prescribed final step. Source controls match examples/classes/updates before separately expanding the data and optimization exposure. The controlled adaptation wrapper retains the same DGCNN encoder/classifier in every arm and compares an equally sized source proxy with real unlabelled target EEG at the same domain-loss coefficient. A pilot loss-off negative control requires target and proxy inputs to produce identical encoder/classifier parameters.
+
+See [Controlled experiment specification](docs/CONTROLLED_EXPERIMENTS.md) for the paired comparisons, complete 639-record scope, and interpretation limits.
+
+The analysis refuses incomplete campaigns. It averages training seeds within each outer target before descriptive target-bootstrap resampling; overlapping source-training populations still limit the uncertainty interpretation. CUDA and the locally prepared licensed feature caches are required. The full run saves a substantial checkpoint archive, so choose an output drive with sufficient free space. All generated outputs stay local.
+
+For the DEAP provenance check only:
+
+```bash
+python scripts/audit_deap_source_consistency.py --data-dir /path/to/DEAP --output-dir /path/to/local/deap-audit
+```
+
+This audit does not edit subject files or certify the origin of a local workbook. Its trial-level outputs can contain licensed ratings and must not be committed. The older reproduction commands below describe preserved historical configurations rather than the revised submission's quantitative scope.
 
 The model runners use the fixed configurations in `configs/` and the frozen fold files. Place licensed datasets and documented local caches at the relative paths in [Data access and preparation](docs/DATA_ACCESS.md). Install the pinned LibEER dependency as described in [Third-party components](docs/THIRD_PARTY.md). Example fold commands:
 
@@ -44,7 +68,15 @@ Run outputs are written locally and ignored by Git. Exact manuscript numbers can
 
 ### Figure rendering from local summaries
 
-The code-only figure utilities are in `scripts/figures/`. The result plotter requires the locally generated `C1_EQUAL_SUBJECT_PRIMARY.csv`, `C1_CANDIDATE_BUDGET_SUMMARY.csv`, `C2_MATCHED_STATS.csv`, `C3_DANN_STATS.csv`, `PER_CLASS_CANONICAL.csv`, and `CANONICAL_RESULT_SUMMARY.csv` in one directory. These derived result files are not distributed here.
+For the controlled reruns, render the complete local summary with:
+
+```bash
+python scripts/figures/plot_controlled_revision.py --summary /path/to/local/controls/analysis/controlled_summary.json --output-dir /path/to/local/figures
+```
+
+The plotter checks complete target/seed coverage before rendering the checkpoint, source-control, adaptation, and target-distribution figures. It writes vector PDFs and PNG previews. Summary files and rendered figures stay outside this public repository.
+
+The older code-only figure utilities are also preserved in `scripts/figures/`. The historical result plotter requires the locally generated `C1_EQUAL_SUBJECT_PRIMARY.csv`, `C1_CANDIDATE_BUDGET_SUMMARY.csv`, `C2_MATCHED_STATS.csv`, `C3_DANN_STATS.csv`, `PER_CLASS_CANONICAL.csv`, and `CANONICAL_RESULT_SUMMARY.csv` in one directory. These derived result files are not distributed here.
 
 ```bash
 python scripts/figures/plot_result_figures.py --data-dir path/to/local/summaries --output-dir path/to/figures
