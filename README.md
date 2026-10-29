@@ -69,6 +69,10 @@ python scripts/figures/plot_dreamer_extension.py --summary /path/to/local/dreame
 
 The local preparation audit and trial-to-rating mapping contain licensed data and remain outside this repository. DGCNN's 14-channel instance explicitly uses 64 maps; no 32/62-channel montage is substituted. Source-training and adaptation decompositions remain on SEED/SEED-IV. The two DREAMER tasks share participants/recordings and are not independent cohorts.
 
+### Paired statistical synthesis
+
+After both extensions pass their completion checks, `scripts/analyze_submission_evidence.py` evaluates the fixed 63-contrast inventory with paired mean sign-flip and exact signed-rank diagnostics, global Holm correction, descriptive person-bootstrap intervals, and seed/person sensitivity checks. See [Statistical analysis](docs/STATISTICAL_ANALYSIS.md) for commands, chronology, exact tie/zero handling, and the important dependence assumptions arising from overlapping training populations. All statistical outputs remain local.
+
 The analysis refuses incomplete campaigns. It averages training seeds within each outer target before descriptive target-bootstrap resampling; overlapping source-training populations still limit the uncertainty interpretation. CUDA and the locally prepared licensed feature caches are required. The full run saves a substantial checkpoint archive, so choose an output drive with sufficient free space. All generated outputs stay local.
 
 For the DEAP provenance check only:

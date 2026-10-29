@@ -1,0 +1,33 @@
+{
+  "analysis": "paired_submission_evidence_20261030",
+  "chronology": "Specified after the earlier DGCNN results were known and after extension training began; not a preregistration or an untouched confirmation analysis.",
+  "training_seeds": [2031, 2032, 2033],
+  "models": ["DGCNN", "CDCN"],
+  "settings": {"SEED": 15, "SEED-IV": 15, "FACED": 123, "DREAMER-valence": 23, "DREAMER-arousal": 23},
+  "primary_outcome": "window_balanced_accuracy_change_pp",
+  "aggregation": "source draws and selector subsets inside seed; training seeds inside outer target",
+  "alpha": 0.05,
+  "expected_hypotheses": 63,
+  "families": {
+    "primary_checkpoint_transfer": 10,
+    "source_components": 12,
+    "adaptation_components": 8,
+    "secondary_transfer_shortfall": 10,
+    "secondary_candidate_set": 8,
+    "secondary_validation_pool": 10,
+    "secondary_implementation_interaction": 5
+  },
+  "bootstrap_replicates": 20000,
+  "bootstrap_seed": 20261029,
+  "exact_signflip_max_nonzero_pairs": 20,
+  "signflip_monte_carlo_samples": 499999,
+  "signflip_seed": 20261030,
+  "rank_zero_method": "pratt",
+  "rank_difference_rounding_decimals_pp": 10,
+  "descriptive_thresholds_pp": [0.5, 1.0, 2.0],
+  "equivalence_margin": null,
+  "p_value_scope": "Conditional working-model diagnostics requiring coordinatewise sign invariance of paired differences. Overlapping fitted source populations are not made independent by aggregation, rank tests, or Holm correction.",
+  "multiplicity": "Holm across all 63 contrasts separately for the mean and rank test engines; within-family results are supplemental only.",
+  "no_optional_stopping": true,
+  "no_outcome_based_exclusions": true
+}
