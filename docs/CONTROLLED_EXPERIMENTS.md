@@ -34,3 +34,12 @@ The full campaign contains 639 stage records: 459 checkpoint, 90 source, and 90 
 `verify_controlled_revision.py` checks saved partitions, initializers, example/class/update matching, nested data pools, and available scoring arrays. `analyze_controlled_revision.py` generates the local summary; `scripts/figures/plot_controlled_revision.py` renders vector figures from it.
 
 DEAP performance is outside this quantitative scope. The read-only audit utility describes local rating inconsistencies without certifying source authenticity or rewriting inputs. HSLT is not part of this specification.
+
+## Exploratory validation-pool diagnostic
+
+`scripts/analyze_validation_pool_size.py` reuses the 459 complete checkpoint records after the principal outcomes have been inspected. It averages all validation-person subsets at sizes 1/2/3 for SEED/SEED-IV and 1/2/3/6/12 for FACED, using the same candidate trajectories and final baseline. Subsets and seeds are averaged within target before target resampling. Single-person and full-pool endpoints are checked against the original selectors. This is an explicitly exploratory sensitivity analysis, not a target-tuned deployment rule or an additional training campaign.
+
+```bash
+python scripts/analyze_validation_pool_size.py --run-dir /path/to/local/controls/production --output-dir /path/to/local/pool-analysis
+python scripts/figures/plot_validation_pool_size.py --summary /path/to/local/pool-analysis/validation_pool_summary.json --output-dir /path/to/local/figures
+```
