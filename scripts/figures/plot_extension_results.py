@@ -43,8 +43,10 @@ def split_figure(root, output):
                 rng=np.random.default_rng(20261029)
                 q=np.quantile(x[rng.integers(len(x),size=(20000,len(x)))].mean(1),[.025,.975])
                 means.append(x.mean()); low.append(q[0]); high.append(q[1])
-            ax.plot(sizes,means,color=COLORS[model],marker=MARKERS[model],markersize=4,linewidth=1,label=model)
-            ax.vlines(sizes,low,high,color=COLORS[model],linewidth=1)
+            offset=(min(np.diff(sizes))*.035) * (-1 if model=='DGCNN' else 1)
+            x_positions=np.array(sizes,dtype=float)+offset
+            ax.plot(x_positions,means,color=COLORS[model],marker=MARKERS[model],markersize=4,linewidth=1,label=model)
+            ax.vlines(x_positions,low,high,color=COLORS[model],linewidth=1)
         ax.axhline(0,color='#777777',linewidth=.7); ax.set_title(dataset,loc='left',weight='bold')
         ax.set_xticks(sizes); ax.set_xlabel('Source-validation people'); ax.set_ylabel('Selected − final BAcc (pp)')
         ax.grid(axis='y',color='#d9dfe3',linewidth=.6); ax.set_axisbelow(True)
