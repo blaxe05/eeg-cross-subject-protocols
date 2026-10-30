@@ -73,6 +73,14 @@ The local preparation audit and trial-to-rating mapping contain licensed data an
 
 After both extensions pass their completion checks, `scripts/analyze_submission_evidence.py` evaluates the fixed 63-contrast inventory with paired mean sign-flip and exact signed-rank diagnostics, global Holm correction, descriptive person-bootstrap intervals, and seed/person sensitivity checks. See [Statistical analysis](docs/STATISTICAL_ANALYSIS.md) for commands, chronology, exact tie/zero handling, and the important dependence assumptions arising from overlapping training populations. All statistical outputs remain local.
 
+The complete evidence plotter is `scripts/figures/plot_submission_evidence.py`. It renders selection/transfer, validation-pool, source/adaptation, instrument-quality, target-distribution, and learning-trajectory plots. The journal numerical companion supplies sanitized derived plot inputs; after extracting it, use:
+
+```bash
+python scripts/figures/plot_submission_evidence.py --evidence-dir /path/to/companion/plot_inputs/evidence --architecture-run-dir /path/to/companion/plot_inputs/architecture --dreamer-run-dir /path/to/companion/plot_inputs/dreamer --output-dir /path/to/local/figures
+```
+
+The same interface accepts the complete local campaign/synthesis directories. It requires verified coverage and averages seeds inside people. Companion data and rendered plots remain outside this repository.
+
 The analysis refuses incomplete campaigns. It averages training seeds within each outer target before descriptive target-bootstrap resampling; overlapping source-training populations still limit the uncertainty interpretation. CUDA and the locally prepared licensed feature caches are required. The full run saves a substantial checkpoint archive, so choose an output drive with sufficient free space. All generated outputs stay local.
 
 For the DEAP provenance check only:
