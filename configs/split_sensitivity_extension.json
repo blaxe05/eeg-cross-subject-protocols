@@ -1,0 +1,14 @@
+{
+  "experiment": "nested_split_sensitivity_extension",
+  "split_seed": 20261030,
+  "split_draws": [0, 1],
+  "training_seeds": [2031, 2032, 2033],
+  "datasets": ["SEED", "SEED-IV", "FACED", "DREAMER-valence", "DREAMER-arousal"],
+  "models": ["DGCNN", "CDCN"],
+  "validation_sizes": {"SEED": [1, 3, 5], "SEED-IV": [1, 3, 5], "FACED": [6, 12, 24], "DREAMER-valence": [3, 5, 9], "DREAMER-arousal": [3, 5, 9]},
+  "subject_counts": {"SEED": 15, "SEED-IV": 15, "FACED": 123, "DREAMER-valence": 23, "DREAMER-arousal": 23},
+  "expected_records": 7164,
+  "budget_rule": "identical_update_steps_to_archived_model_task_target_seed",
+  "selection": "equal_validation_person_bacc_earliest_tie",
+  "primary_new_family": "selected_minus_final_largest_vs_middle_and_smallest_vs_middle_holm_20"
+}

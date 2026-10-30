@@ -148,6 +148,19 @@ JSON and CSV outputs go to the ignored `experiments/cross_person_checkpoint/` di
 
 The plotter renders the four 40-checkpoint settings together and a separate FACED panel pair (`figure_faced.pdf`/`.png`) using a scale appropriate to the eight-checkpoint extension.
 
+### Validation-split and temporal-model extensions
+
+`configs/split_sensitivity_extension.json` fixes nested, reproducible validation-person sets for each held-out person. `scripts/run_split_sensitivity.py` retrains each model for the same number of updates and checkpoint positions as its corresponding local reference trajectory. Validation-set size changes the people available for training and the resulting per-example exposure; the comparison concerns the whole partitioning policy at fixed compute. Source-validation labels select checkpoints; held-out target labels are used for scoring only. Both DREAMER tasks share the same subject partitions.
+
+The runner requires the original project inputs, LibEER checkout, prepared DREAMER features, and previously generated reference `result.json` files, all stored locally. No recordings, weights or results are included in the repository. For example, using local paths appropriate to the user's installation:
+
+```bash
+python scripts/run_split_sensitivity.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/new-runs --model DGCNN --dataset SEED --seed 2031
+python scripts/analyze_split_sensitivity.py --run-dir /path/to/complete-new-runs --output-dir /path/to/new-analysis
+```
+
+`scripts/evaluate_archived_temporal_transfer.py` re-evaluates saved SEED-IV Temporal CNN and FACED Residual TCN checkpoints under person-level balanced-accuracy selection. `scripts/run_temporal_transfer_extension.py` trains three fresh seeds using their source-only partitions, normalizers and fixed configurations. These scripts require the historical raw-window caches, fold specifications and model files; they do not download datasets. `scripts/analyze_temporal_transfer_extension.py` rejects incomplete coverage and summarizes paired person-level outcomes. The temporal models use different representations and optimization settings from the graph and dense-convolutional models.
+
 ## License
 
 Original author-written code in this repository is released under the [MIT License](LICENSE). The CDCN evaluation wrapper in `src/tac_revision/models.py` adapts methods from LibEER; its upstream copyright and MIT terms are preserved in [third-party notices](docs/THIRD_PARTY.md). Third-party libraries, benchmark implementations, and datasets remain subject to their respective licenses and terms. This repository does not relicense or redistribute SEED, SEED-IV, FACED, DEAP, LibEER, or other third-party materials. Fold manifests are experiment specifications, not dataset redistribution.
