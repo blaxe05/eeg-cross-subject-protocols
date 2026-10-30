@@ -157,9 +157,16 @@ The runner requires the original project inputs, LibEER checkout, prepared DREAM
 ```bash
 python scripts/run_split_sensitivity.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/new-runs --model DGCNN --dataset SEED --seed 2031
 python scripts/analyze_split_sensitivity.py --run-dir /path/to/complete-new-runs --output-dir /path/to/new-analysis
+python scripts/analyze_split_quality.py --run-dir /path/to/complete-new-runs --reference-runs-root /path/to/previous-runs --output-dir /path/to/new-analysis
 ```
 
-`scripts/evaluate_archived_temporal_transfer.py` re-evaluates saved SEED-IV Temporal CNN and FACED Residual TCN checkpoints under person-level balanced-accuracy selection. `scripts/run_temporal_transfer_extension.py` trains three fresh seeds using their source-only partitions, normalizers and fixed configurations. These scripts require the historical raw-window caches, fold specifications and model files; they do not download datasets. `scripts/analyze_temporal_transfer_extension.py` rejects incomplete coverage and summarizes paired person-level outcomes. The temporal models use different representations and optimization settings from the graph and dense-convolutional models.
+`scripts/evaluate_archived_temporal_transfer.py` re-evaluates saved SEED-IV Temporal CNN and FACED Residual TCN checkpoints under person-level balanced-accuracy selection. `scripts/run_temporal_transfer_extension.py` trains three fresh seeds using their source-only partitions, normalizers and fixed configurations. These scripts require the historical raw-window caches, fold specifications and model files; they do not download datasets. `scripts/analyze_temporal_transfer_extension.py` rejects incomplete coverage and summarizes paired person-level outcomes. `scripts/analyze_temporal_quality.py` reconstructs final and selected scores, class concentration and trial-level summaries from local predictions. The temporal models use different representations and optimization settings from the graph and dense-convolutional models.
+
+```bash
+python scripts/analyze_temporal_quality.py --run-dir /path/to/temporal-runs --analysis-dir /path/to/temporal-analysis --output-dir /path/to/temporal-quality
+python scripts/figures/plot_extension_results.py --kind split --analysis-dir /path/to/new-analysis --output-dir /path/to/figures
+python scripts/figures/plot_extension_results.py --kind temporal --analysis-dir /path/to/temporal-analysis --output-dir /path/to/figures
+```
 
 ## License
 

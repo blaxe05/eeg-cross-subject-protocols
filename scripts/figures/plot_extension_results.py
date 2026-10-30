@@ -30,7 +30,7 @@ def split_figure(root, output):
     for r in rows:
         key=(r['model'],r['dataset'],int(r['validation_size']))
         grouped[key][r['target']].append(float(r['selected_minus_final_pp']))
-    fig,axes=plt.subplots(2,3,figsize=(10,5.8),layout='constrained')
+    fig,axes=plt.subplots(2,3,figsize=(7.2,5.5),layout='constrained')
     datasets=['SEED','SEED-IV','FACED','DREAMER-valence','DREAMER-arousal']
     for ax,dataset in zip(axes.flat,datasets):
         for model in ['DGCNN','CDCN']:
@@ -57,7 +57,7 @@ def split_figure(root, output):
 def temporal_figure(root,output):
     value=json.loads((root/'temporal_transfer_statistics.json').read_text(encoding='utf8'))
     if value['status']!='complete' or value['fresh_records']!=414: raise AssertionError('Incomplete temporal analysis')
-    results=value['results']; fig,axes=plt.subplots(1,2,figsize=(8.4,2.8),layout='constrained')
+    results=value['results']; fig,axes=plt.subplots(1,2,figsize=(7.2,2.8),layout='constrained')
     for ax,outcome,title in zip(axes,['different_person_change','selection_minus_transfer'],['Different-person change','Selection gain − transfer change']):
         rows=[r for r in results if r['outcome']==outcome]
         if len(rows)!=2: raise AssertionError('Missing temporal outcomes')
