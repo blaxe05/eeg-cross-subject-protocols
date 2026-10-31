@@ -74,8 +74,8 @@ def main():
             target = lookup[model, setting, 'primary_checkpoint_transfer', 'different_target_vs_final']
             point(axes[0], own, 4 - i + offset, color, marker)
             point(axes[1], target, 4 - i + offset, color, marker)
-    axes[0].set_title('a  Person used for selection', loc='left', fontweight='bold')
-    axes[1].set_title('b  Different outer person', loc='left', fontweight='bold')
+    axes[0].set_title('a  Subject used for selection', loc='left', fontweight='bold')
+    axes[1].set_title('b  Different outer subject', loc='left', fontweight='bold')
     for ax in axes:
         ax.set_xlabel('Change from final checkpoint (pp)')
     fig.legend(handles=handles, loc='upper center', ncol=2, frameon=False, bbox_to_anchor=(.55, 1.01))
@@ -101,7 +101,7 @@ def main():
                         markersize=3.5, capsize=2, lw=1)
             ax.set_xticks(xs)
         ax.set_title(label, loc='left', fontweight='bold')
-        ax.set_xlabel('Source-validation people')
+        ax.set_xlabel('Source-validation subjects')
         ax.set_ylabel('Change from final (pp)')
     axes[2, 1].axis('off')
     axes[2, 1].legend(handles=handles, loc='upper left', frameon=False)
@@ -113,7 +113,7 @@ def main():
     fig, axes = plt.subplots(2, 2, figsize=(7.12, 4.5))
     for col, setting in enumerate(['SEED', 'SEED-IV']):
         for rownum, (family, contrasts, labels) in enumerate([
-            ('source_components', ['broader_people', 'more_examples', 'more_updates'], ['Broader people', 'More examples', 'More updates']),
+            ('source_components', ['broader_people', 'more_examples', 'more_updates'], ['More subjects', 'More examples', 'More updates']),
             ('adaptation_components', ['real_target_minus_proxy', 'proxy_loss_on_minus_off'], ['Target - proxy', 'Proxy: loss on - off'])]):
             ax = axes[rownum, col]
             decorate(ax)
@@ -176,7 +176,7 @@ def main():
         ax.set_yticks([.13, -.13], ['DGCNN', 'CDCN'], fontsize=8)
         ax.set_ylim(-.3, .3)
         ax.set_title(label, loc='left', fontweight='bold')
-    axes[-1].set_xlabel('Selected minus final checkpoint on the different person (pp)')
+    axes[-1].set_xlabel('Selected minus final checkpoint on the different subject (pp)')
     fig.subplots_adjust(left=.13, right=.985, top=.96, bottom=.08, hspace=.65)
     save(fig, 'target_distributions')
 

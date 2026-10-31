@@ -91,15 +91,15 @@ def design():
               box(260, 56, 212, 80, ['Saved checkpoints', '40; FACED uses 8'], key='saved_states'),
               box(520, 56, 232, 80, ['Source validation', 'earliest BAcc maximum'], BLUE, '#F2F6FA', 'validation_selector'),
               box(800, 56, 200, 80, ['Different target', 'chosen versus final'], key='target_score'),
-              text(24, 172, 'Selection-person gain and target change use the same two model states; target labels are for scoring.', 17, anchor='start'),
+              text(24, 172, 'Selection-subject gain and target change use the same two model states; target labels are for scoring.', 17, anchor='start'),
               '<path d="M24,196 H1000" stroke="#D9E0E5" stroke-width="1"/>',
               text(24, 232, 'b   Source-training path  ·  fixed target, initialization and scoring step', 20, 'bold', anchor='start')]
-    for a, b, label in [(228, 284, 'people'), (488, 544, 'examples'), (748, 804, 'updates')]:
+    for a, b, label in [(228, 284, 'subjects'), (488, 544, 'examples'), (748, 804, 'updates')]:
         parts.append(arrow(a, 320, b, 320))
         parts.append(text((a+b)/2, 274, label, 16, color=MUTED))
-    parts += [box(24, 284, 204, 80, ['A  Strict sources', '11 people · N · S'], key='arm_a'),
-              box(284, 284, 204, 80, ['B  Broader people', '14 people · N · S'], key='arm_b'),
-              box(544, 284, 204, 80, ['C  More examples', '14 people · Nₑ · S'], key='arm_c'),
+    parts += [box(24, 284, 204, 80, ['A  Strict sources', '11 subjects · N · S'], key='arm_a'),
+              box(284, 284, 204, 80, ['B  More subjects', '14 subjects · N · S'], key='arm_b'),
+              box(544, 284, 204, 80, ['C  More examples', '14 subjects · Nₑ · S'], key='arm_c'),
               box(804, 284, 204, 80, ['D  More updates', 'same Nₑ · S′ > S'], key='arm_d'),
               text(24, 400, 'B matches A’s per-class counts. C contains B. D continues C’s optimizer path. Repeat source draws 0 / 1 / 2.', 17, anchor='start'),
               '<path d="M24,424 H1000" stroke="#D9E0E5" stroke-width="1"/>',

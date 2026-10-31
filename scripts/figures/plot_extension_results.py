@@ -48,7 +48,7 @@ def split_figure(root, output):
             ax.plot(x_positions,means,color=COLORS[model],marker=MARKERS[model],markersize=4,linewidth=1,label=model)
             ax.vlines(x_positions,low,high,color=COLORS[model],linewidth=1)
         ax.axhline(0,color='#777777',linewidth=.7); ax.set_title(dataset,loc='left',weight='bold')
-        ax.set_xticks(sizes); ax.set_xlabel('Source-validation people'); ax.set_ylabel('Selected − final BAcc (pp)')
+        ax.set_xticks(sizes); ax.set_xlabel('Source-validation subjects'); ax.set_ylabel('Selected − final BAcc (pp)')
         ax.grid(axis='y',color='#d9dfe3',linewidth=.6); ax.set_axisbelow(True)
     axes.flat[-1].axis('off'); axes.flat[-1].legend(*axes.flat[0].get_legend_handles_labels(),loc='center',frameon=False)
     fig.savefig(output/'split_sensitivity.pdf',bbox_inches='tight');fig.savefig(output/'split_sensitivity.png',dpi=300,bbox_inches='tight');plt.close(fig)
@@ -58,7 +58,7 @@ def temporal_figure(root,output):
     value=json.loads((root/'temporal_transfer_statistics.json').read_text(encoding='utf8'))
     if value['status']!='complete' or value['fresh_records']!=414: raise AssertionError('Incomplete temporal analysis')
     results=value['results']; fig,axes=plt.subplots(1,2,figsize=(7.2,2.8),layout='constrained')
-    for ax,outcome,title in zip(axes,['different_person_change','selection_minus_transfer'],['Different-person change','Selection gain − transfer change']):
+    for ax,outcome,title in zip(axes,['different_person_change','selection_minus_transfer'],['Different-subject change','Selection gain − transfer change']):
         rows=[r for r in results if r['outcome']==outcome]
         if len(rows)!=2: raise AssertionError('Missing temporal outcomes')
         for y,r in enumerate(rows):
