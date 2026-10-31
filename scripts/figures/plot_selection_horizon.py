@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 plt.rcParams.update({'font.family':'Arial','font.size':9,'axes.titlesize':9,
@@ -71,25 +72,64 @@ def selector_plot(rows,output):
 
 
 def horizon_plot(rows,output):
-    fig,axes=plt.subplots(2,2,figsize=(7.12,4.9),sharex=True,sharey=True)
+    fig,axes=plt.subplots(2,2,figsize=(7.12,5.25),sharex=True,sharey=True)
+    horizons={20:('#87949E','o',.22),40:('#245A81','s',0.),80:('#A6532F','D',-.22)}
+    limits=[0.]
     for i,(ax,(dataset,model)) in enumerate(zip(axes.flat,SETTINGS)):
-        for policy,(label,color,marker,style) in POLICIES.items():
-            data=[next(r for r in rows if (r['dataset'],r['model'],int(r['horizon']),r['policy'])==(dataset,model,h,policy)) for h in [20,40,80]]
-            means=np.array([float(r['target_change_pp_mean']) for r in data])
-            lo=np.array([float(r['target_change_pp_ci_low']) for r in data]);hi=np.array([float(r['target_change_pp_ci_high']) for r in data])
-            ax.errorbar([20,40,80],means,yerr=[means-lo,hi-means],color=color,marker=marker,
-                markerfacecolor='white' if 'patience' in policy else color,markersize=4,linewidth=.9,
-                elinewidth=.7,capsize=2,linestyle=style,label=label)
-        ax.axhline(0,color='#7B8790',linewidth=.8,zorder=0)
+        for y,policy in zip(range(3,-1,-1),POLICIES):
+            for horizon,(color,marker,offset) in horizons.items():
+                r=next(r for r in rows if (r['dataset'],r['model'],int(r['horizon']),r['policy'])==(dataset,model,horizon,policy))
+                mean,lo,hi=[float(r['target_change_pp_'+k]) for k in ['mean','ci_low','ci_high']]
+                limits.extend([lo,hi])
+                ax.hlines(y+offset,lo,hi,color=color,linewidth=.9)
+                ax.plot(mean,y+offset,color=color,marker=marker,markersize=3.8)
+        ax.axvline(0,color='#7B8790',linewidth=.8,zorder=0)
         ax.set_title(f'{chr(97+i)}  {dataset} · {model}',loc='left',weight='bold')
-        ax.set_xticks([20,40,80]);ax.set_xlim(15,85)
-        if i>=2:ax.set_xlabel('Maximum training budget (units)')
-        if i%2==0:ax.set_ylabel('Selected − final BAcc (pp)')
-        ax.grid(axis='y',color='#E4E9ED',linewidth=.55);ax.set_axisbelow(True)
-    handles,labels=axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles,labels,loc='lower center',ncol=2,frameon=False,bbox_to_anchor=(.53,-.005))
-    fig.subplots_adjust(left=.10,right=.985,top=.93,bottom=.235,hspace=.40,wspace=.16)
+        ax.set_yticks(range(3,-1,-1),[v[0] for v in POLICIES.values()]);ax.set_ylim(-.55,3.55)
+        ax.xaxis.set_major_locator(MaxNLocator(5))
+        if i>=2:ax.set_xlabel('Selected − final BAcc (pp)')
+        ax.grid(axis='x',color='#E4E9ED',linewidth=.55);ax.set_axisbelow(True)
+    span=max(limits)-min(limits)
+    axes.flat[0].set_xlim(min(limits)-.08*max(1,span),max(limits)+.08*max(1,span))
+    handles=[Line2D([],[],color=c,marker=m,linewidth=.9,label=f'{h} units') for h,(c,m,_) in horizons.items()]
+    fig.legend(handles=handles,loc='lower center',ncol=3,frameon=False,bbox_to_anchor=(.57,0))
+    fig.subplots_adjust(left=.205,right=.985,top=.94,bottom=.165,hspace=.35,wspace=.16)
     save(fig,output,'training_horizons')
+
+
+def extended_learning_plot(rows,output):
+    if len(rows)!=14400:
+        raise AssertionError('Expected 180 complete 80-unit trajectories')
+    lookup={}
+    for r in rows:
+        key=(r['dataset'],r['model'],r['target_subject'],int(r['seed']),int(r['budget_unit']))
+        if key in lookup:raise AssertionError('Duplicate extended learning state')
+        lookup[key]=r
+    fig,axes=plt.subplots(2,4,figsize=(7.12,4.35),sharex=True)
+    metrics=[('equal_validation_subject_nll_nats','#245A81','-'),
+             ('equal_validation_subject_balanced_nll_nats','#A6532F','--')]
+    for column,(dataset,model) in enumerate(SETTINGS):
+        for row,fields in [(0,metrics),(1,[('interval_mean_training_objective','#596975','-')])]:
+            ax=axes[row,column]
+            for field,color,style in fields:
+                values=np.array([[np.mean([float(lookup[(dataset,model,str(t),seed,u)][field])
+                    for seed in [2031,2032,2033]]) for u in range(1,81)] for t in range(1,16)])
+                if not np.isfinite(values).all():raise AssertionError('Nonfinite learning curve')
+                med=np.median(values,axis=0);lo,hi=np.quantile(values,[.25,.75],axis=0)
+                ax.plot(range(1,81),med,color=color,linestyle=style,linewidth=.9)
+                ax.fill_between(range(1,81),lo,hi,color=color,alpha=.10,linewidth=0)
+            ax.axvline(40,color='#909AA2',linestyle=':',linewidth=.7)
+            ax.set_xticks([20,40,80]);ax.set_xlim(1,80);ax.yaxis.set_major_locator(MaxNLocator(4))
+            ax.grid(axis='y',color='#E4E9ED',linewidth=.5);ax.set_axisbelow(True)
+            if row==0:ax.set_title(f'{dataset}\n{model}',weight='bold',pad=8)
+            else:ax.set_xlabel('Budget unit')
+        axes[0,0].set_ylabel('Validation NLL (nats)')
+        axes[1,0].set_ylabel('Interval objective')
+    handles=[Line2D([],[],color=c,linestyle=s,linewidth=1,label=label)
+             for (_,c,s),label in zip(metrics,['Ordinary NLL','Class-balanced NLL'])]
+    fig.legend(handles=handles,loc='lower center',ncol=2,frameon=False,bbox_to_anchor=(.55,0))
+    fig.subplots_adjust(left=.095,right=.985,top=.86,bottom=.195,hspace=.35,wspace=.46)
+    save(fig,output,'extended_learning_curves')
 
 
 def ci(values):
@@ -157,6 +197,8 @@ def main():
     args=p.parse_args();summary,schedules=complete_inputs(args.analysis_dir)
     args.output_dir.mkdir(parents=True,exist_ok=True)
     selector_plot(summary,args.output_dir);horizon_plot(summary,args.output_dir);schedule_plot(schedules,args.output_dir)
+    learning=args.analysis_dir/'complete_extended_trajectories.csv'
+    if learning.exists():extended_learning_plot(read_csv(learning),args.output_dir)
     print('POLICY_HORIZON_FIGURES_COMPLETE',flush=True)
 
 
