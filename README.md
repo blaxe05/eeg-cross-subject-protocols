@@ -168,6 +168,8 @@ python scripts/figures/plot_extension_results.py --kind split --analysis-dir /pa
 python scripts/figures/plot_extension_results.py --kind temporal --analysis-dir /path/to/temporal-analysis --output-dir /path/to/figures
 ```
 
+The split figure shows the 20 paired differences in selected-minus-final target BAcc for smaller and larger validation partitions relative to the reference partition. It reads the paired means and descriptive 95% subject-bootstrap intervals directly from `split_sensitivity_statistics.json`. Both panels use the same percentage-point scale and label the validation-pool and target-subject counts. The intervals are unadjusted; formal comparisons retain the separate 20-contrast Holm correction. Changing the partition also changes source-training membership and available examples at fixed optimizer updates.
+
 ### Selection policies, longer horizons and adversarial schedules
 
 `configs/selection_horizon_extension.json` defines four source-validation rules on the same candidates: peak BAcc, minimum predictive NLL, and patience-five variants of each. Pooled validation gives each subject equal weight. Individual-subject selectors remain secondary. NLL is computed from logits with stable log-softmax; native loss changes and BAcc percentage-point changes are reported separately.

@@ -10,7 +10,17 @@ PLOTTER = Path(__file__).resolve().parents[1] / 'scripts/figures/plot_extension_
 def test_extension_figures_with_complete_synthetic_inputs(tmp_path):
     settings={'SEED':(15,[1,3,5]),'SEED-IV':(15,[1,3,5]),'FACED':(123,[6,12,24]),
               'DREAMER-valence':(23,[3,5,9]),'DREAMER-arousal':(23,[3,5,9])}
-    (tmp_path/'split_sensitivity_statistics.json').write_text(json.dumps({'status':'complete','cases_verified':7164}))
+    split_results=[]
+    for model in ['DGCNN','CDCN']:
+        for dataset,(n,sizes) in settings.items():
+            for index,contrast in [(0,'smallest_minus_middle'),(2,'largest_minus_middle')]:
+                # The shared subject intercept cancels in the paired contrast.
+                difference=-(sizes[index]-sizes[1])*.01
+                split_results.append({'model':model,'dataset':dataset,'contrast':contrast,
+                    'sizes':[sizes[index],sizes[1]],'summary':{'n_target_people':n,
+                    'mean_pp':difference,'descriptive_ci95_pp':[difference,difference]}})
+    (tmp_path/'split_sensitivity_statistics.json').write_text(json.dumps({
+        'status':'complete','cases_verified':7164,'family_size':20,'results':split_results}))
     rows=[]
     for model in ['DGCNN','CDCN']:
         for dataset,(n,sizes) in settings.items():

@@ -1,14 +1,13 @@
 """Render completed validation-split or temporal checkpoint analyses."""
 from __future__ import annotations
 import argparse
-import csv
-from collections import defaultdict
 import json
 from pathlib import Path
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 
 plt.rcParams.update({'font.family':'Arial','font.size':9,'axes.titlesize':9,'axes.labelsize':9,'xtick.labelsize':8.5,'ytick.labelsize':9,'axes.linewidth':.65,'axes.spines.top':False,
@@ -17,40 +16,57 @@ COLORS={'DGCNN':'#245A81','CDCN':'#A6532F'}
 MARKERS={'DGCNN':'o','CDCN':'s'}
 
 
-def read_csv(path):
-    with path.open(newline='',encoding='utf8') as f: return list(csv.DictReader(f))
-
-
 def split_figure(root, output):
     summary=json.loads((root/'split_sensitivity_statistics.json').read_text(encoding='utf8'))
-    if summary['status']!='complete' or summary['cases_verified']!=7164: raise AssertionError('Incomplete split analysis')
-    rows=read_csv(root/'split_person_seed_draw_outcomes.csv')
-    if len(rows)!=7164: raise AssertionError('Incomplete person/seed/draw outcomes')
-    grouped=defaultdict(lambda:defaultdict(list))
-    for r in rows:
-        key=(r['model'],r['dataset'],int(r['validation_size']))
-        grouped[key][r['target']].append(float(r['selected_minus_final_pp']))
-    fig,axes=plt.subplots(2,3,figsize=(7.2,5.5),layout='constrained')
+    if summary['status']!='complete' or summary['cases_verified']!=7164 or summary['family_size']!=20:
+        raise AssertionError('Complete split analysis and its 20-contrast family required')
     datasets=['SEED','SEED-IV','FACED','DREAMER-valence','DREAMER-arousal']
-    for ax,dataset in zip(axes.flat,datasets):
-        for model in ['DGCNN','CDCN']:
-            sizes=sorted(k[2] for k in grouped if k[:2]==(model,dataset))
-            means,low,high=[],[],[]
-            for n in sizes:
-                persons=grouped[(model,dataset,n)]
-                if any(len(v)!=6 for v in persons.values()): raise AssertionError('Expected three seeds and two draws inside person')
-                x=np.array([np.mean(v) for _,v in sorted(persons.items())])
-                rng=np.random.default_rng(20261029)
-                q=np.quantile(x[rng.integers(len(x),size=(20000,len(x)))].mean(1),[.025,.975])
-                means.append(x.mean()); low.append(q[0]); high.append(q[1])
-            offset=(min(np.diff(sizes))*.035) * (-1 if model=='DGCNN' else 1)
-            x_positions=np.array(sizes,dtype=float)+offset
-            ax.plot(x_positions,means,color=COLORS[model],marker=MARKERS[model],markersize=4,linewidth=1,label=model)
-            ax.vlines(x_positions,low,high,color=COLORS[model],linewidth=1)
-        ax.axhline(0,color='#777777',linewidth=.7); ax.set_title(dataset.replace('DREAMER-valence','DREAMER V').replace('DREAMER-arousal','DREAMER A'),loc='left',weight='bold')
-        ax.set_xticks(sizes); ax.set_xlabel('Source-validation subjects'); ax.set_ylabel('Selected − final BAcc (pp)')
-        ax.grid(axis='y',color='#d9dfe3',linewidth=.6); ax.set_axisbelow(True)
-    axes.flat[-1].axis('off'); axes.flat[-1].legend(*axes.flat[0].get_legend_handles_labels(),loc='center',frameon=False)
+    contrasts=['smallest_minus_middle','largest_minus_middle']
+    rows={(r['model'],r['dataset'],r['contrast']):r for r in summary['results']}
+    expected={(m,d,c) for m in COLORS for d in datasets for c in contrasts}
+    if len(summary['results'])!=20 or set(rows)!=expected:
+        raise AssertionError('Expected every paired model/task/partition contrast exactly once')
+    for r in rows.values():
+        s=r['summary'];lo,hi=s['descriptive_ci95_pp']
+        if not np.isfinite([s['mean_pp'],lo,hi]).all() or lo>hi or s['n_target_people']<2:
+            raise AssertionError('Invalid paired estimate or interval')
+    # Read the paired intervals themselves; differences between endpoint
+    # intervals do not describe uncertainty in the within-subject contrast.
+    extent=max(abs(v) for r in rows.values() for v in r['summary']['descriptive_ci95_pp'])
+    limit=max(1.,float(np.ceil(extent)))
+    fig,axes=plt.subplots(1,2,figsize=(7.12,4.25),sharex=True)
+    names={'DREAMER-valence':'DREAMER V','DREAMER-arousal':'DREAMER A'}
+    for ax,contrast,title in zip(axes,contrasts,['a  Smaller − reference','b  Larger − reference']):
+        labels=[]
+        for y,dataset in zip(range(4,-1,-1),datasets):
+            group=[rows[(m,dataset,contrast)] for m in COLORS]
+            counts={(tuple(r['sizes']),r['summary']['n_target_people']) for r in group}
+            if len(counts)!=1:
+                raise AssertionError('Backbones must share validation sizes and target counts')
+            sizes,n=next(iter(counts))
+            if not (sizes[0]<sizes[1] if contrast==contrasts[0] else sizes[0]>sizes[1]):
+                raise AssertionError('Unexpected partition contrast direction')
+            labels.append(f'{names.get(dataset,dataset)}\n{sizes[0]} vs {sizes[1]} · n = {n}')
+            for model,offset in [('DGCNN',.15),('CDCN',-.15)]:
+                s=rows[(model,dataset,contrast)]['summary']
+                lo,hi=s['descriptive_ci95_pp'];position=y+offset
+                ax.hlines(position,lo,hi,color=COLORS[model],linewidth=1.1,zorder=2)
+                ax.vlines([lo,hi],position-.035,position+.035,color=COLORS[model],linewidth=.8,zorder=2)
+                ax.plot(s['mean_pp'],position,marker=MARKERS[model],color=COLORS[model],
+                        markersize=4.1,linestyle='none',zorder=3)
+        ax.axvline(0,color='#7B8790',linewidth=.8,zorder=1)
+        ax.set_xlim(-limit,limit);ax.set_ylim(-.5,4.5)
+        ax.set_xticks(np.linspace(-limit,limit,5))
+        ax.set_yticks(range(4,-1,-1),labels);ax.tick_params(axis='y',length=0,pad=7)
+        ax.set_title(title,loc='left',weight='bold',pad=12)
+        ax.spines['left'].set_visible(False)
+        ax.grid(axis='x',color='#E4E9ED',linewidth=.55);ax.set_axisbelow(True)
+    handles=[Line2D([0],[0],color=COLORS[m],marker=MARKERS[m],linewidth=1.1,
+                    markersize=4.1,label=m) for m in COLORS]
+    fig.legend(handles=handles,loc='upper center',bbox_to_anchor=(.54,1.),
+               frameon=False,ncol=2,handlelength=1.8,columnspacing=2.5)
+    fig.supxlabel('Difference in checkpoint-transfer gain (BAcc pp)',y=.04,fontsize=9)
+    fig.subplots_adjust(left=.16,right=.985,top=.80,bottom=.16,wspace=.64)
     fig.savefig(output/'split_sensitivity.pdf',bbox_inches='tight');fig.savefig(output/'split_sensitivity.png',dpi=300,bbox_inches='tight');plt.close(fig)
 
 
