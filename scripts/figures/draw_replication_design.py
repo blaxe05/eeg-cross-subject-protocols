@@ -38,7 +38,7 @@ def arrow(x1, y1, x2, y2, color=MUTED, dashed=False):
 def canvas(height, body, title, description):
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="{height}" viewBox="0 0 1024 {height}" role="img" aria-labelledby="title desc">
 <title id="title">{escape(title)}</title><desc id="desc">{escape(description)}</desc>
-<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="{MUTED}"/></marker></defs>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 Z" fill="{MUTED}"/></marker></defs>
 <rect width="1024" height="{height}" fill="white"/>{''.join(body)}</svg>'''
 
 
@@ -62,7 +62,7 @@ def architecture():
              box(856, 188, 152, 104, ['Classifier', 'flatten → FC256', 'FC → class logits', '2 / 3 / 4 / 9'], key='graph_classifier'),
              text(24, 328, 'F = 64 for C = 62 or 14; F = 128 for C = 32. Dropout precedes both classifier linear layers.', 17, color=MUTED, anchor='start'),
              text(24, 380, 'b   CDCN', 20, 'bold', anchor='start'),
-             '<rect x="112" y="400" width="704" height="200" rx="6" fill="#F3F8F6" stroke="#00796B" stroke-width="1.5"/>',
+             '<rect x="112" y="400" width="704" height="200" rx="6" fill="#FBF4F0" stroke="#A6532F" stroke-width="1.5"/>',
              text(128, 428, 'Channel-fused dense encoder', 18, 'bold', anchor='start')]
     for a, b in [(96, 144), (224, 248), (352, 376), (432, 456), (560, 584), (640, 664), (768, 856)]:
         parts.append(arrow(a, 500, b, 500))
@@ -93,15 +93,17 @@ def design():
               box(800, 56, 200, 80, ['Different target', 'chosen versus final'], key='target_score'),
               text(24, 172, 'Selection-subject gain and target change use the same two model states; target labels are for scoring.', 17, anchor='start'),
               '<path d="M24,196 H1000" stroke="#D9E0E5" stroke-width="1"/>',
-              text(24, 232, 'b   Source-training path  ·  fixed target, initialization and scoring step', 20, 'bold', anchor='start')]
-    for a, b, label in [(228, 284, 'subjects'), (488, 544, 'examples'), (748, 804, 'updates')]:
-        parts.append(arrow(a, 320, b, 320))
+              text(24, 232, 'b   Matched source-training comparisons  ·  fixed target and initialization', 20, 'bold', anchor='start')]
+    for a, b, label in [(228, 284, 'compare'), (488, 544, 'compare')]:
+        parts.append(f'<path d="M{a},320 H{b}" fill="none" stroke="{MUTED}" stroke-width="1.5" stroke-dasharray="4,4" marker-start="url(#arrow)" marker-end="url(#arrow)"/>')
         parts.append(text((a+b)/2, 274, label, 16, color=MUTED))
-    parts += [box(24, 284, 204, 80, ['A  Strict sources', '11 subjects · N · S'], key='arm_a'),
-              box(284, 284, 204, 80, ['B  More subjects', '14 subjects · N · S'], key='arm_b'),
+    parts.append(arrow(748, 320, 804, 320))
+    parts.append(text(776, 274, 'continue', 16, color=MUTED))
+    parts += [box(24, 284, 204, 80, ['A  Original sources', '11 subjects · N · S'], key='arm_a'),
+              box(284, 284, 204, 80, ['B  New composition', '14 subjects · N · S'], key='arm_b'),
               box(544, 284, 204, 80, ['C  More examples', '14 subjects · Nₑ · S'], key='arm_c'),
               box(804, 284, 204, 80, ['D  More updates', 'same Nₑ · S′ > S'], key='arm_d'),
-              text(24, 400, 'B matches A’s per-class counts. C contains B. D continues C’s optimizer path. Repeat source draws 0 / 1 / 2.', 17, anchor='start'),
+              text(24, 400, 'A / B / C share initialization. B matches A’s class counts. C contains B’s examples; D continues C.', 17, anchor='start'),
               '<path d="M24,424 H1000" stroke="#D9E0E5" stroke-width="1"/>',
               text(24, 460, 'c   Auxiliary-input controls  ·  same backbone, source batches and update budget', 20, 'bold', anchor='start'),
               box(24, 488, 288, 80, ['Source proxy · loss off', 'domain coefficient λ = 0'], key='adapt_off'),

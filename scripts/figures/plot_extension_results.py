@@ -11,7 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams.update({'font.family':'Arial','font.size':9,'axes.spines.top':False,
+plt.rcParams.update({'font.family':'Arial','font.size':9,'axes.titlesize':9,'axes.labelsize':9,'xtick.labelsize':8.5,'ytick.labelsize':9,'axes.linewidth':.65,'axes.spines.top':False,
                      'axes.spines.right':False,'pdf.fonttype':42,'ps.fonttype':42})
 COLORS={'DGCNN':'#245A81','CDCN':'#A6532F'}
 MARKERS={'DGCNN':'o','CDCN':'s'}
@@ -47,7 +47,7 @@ def split_figure(root, output):
             x_positions=np.array(sizes,dtype=float)+offset
             ax.plot(x_positions,means,color=COLORS[model],marker=MARKERS[model],markersize=4,linewidth=1,label=model)
             ax.vlines(x_positions,low,high,color=COLORS[model],linewidth=1)
-        ax.axhline(0,color='#777777',linewidth=.7); ax.set_title(dataset,loc='left',weight='bold')
+        ax.axhline(0,color='#777777',linewidth=.7); ax.set_title(dataset.replace('DREAMER-valence','DREAMER V').replace('DREAMER-arousal','DREAMER A'),loc='left',weight='bold')
         ax.set_xticks(sizes); ax.set_xlabel('Source-validation subjects'); ax.set_ylabel('Selected − final BAcc (pp)')
         ax.grid(axis='y',color='#d9dfe3',linewidth=.6); ax.set_axisbelow(True)
     axes.flat[-1].axis('off'); axes.flat[-1].legend(*axes.flat[0].get_legend_handles_labels(),loc='center',frameon=False)
@@ -57,17 +57,26 @@ def split_figure(root, output):
 def temporal_figure(root,output):
     value=json.loads((root/'temporal_transfer_statistics.json').read_text(encoding='utf8'))
     if value['status']!='complete' or value['fresh_records']!=414: raise AssertionError('Incomplete temporal analysis')
-    results=value['results']; fig,axes=plt.subplots(1,2,figsize=(7.2,2.8),layout='constrained')
-    for ax,outcome,title in zip(axes,['different_person_change','selection_minus_transfer'],['Different-subject change','Selection gain − transfer change']):
-        rows=[r for r in results if r['outcome']==outcome]
-        if len(rows)!=2: raise AssertionError('Missing temporal outcomes')
-        for y,r in enumerate(rows):
-            s=r['summary']; m=s['mean_pp']; lo,hi=s['descriptive_ci95_pp']
-            ax.hlines(y,lo,hi,color='#245A81',linewidth=1);ax.plot(m,y,'o',color='#245A81',markersize=4)
-        ax.axvline(0,color='#777777',linewidth=.7);ax.set_yticks(range(len(rows)),[r['dataset'] for r in rows])
-        ax.invert_yaxis();ax.set_title(title,loc='left',weight='bold');ax.set_xlabel('Balanced-accuracy change (pp)')
-        ax.grid(axis='x',color='#d9dfe3',linewidth=.6);ax.set_axisbelow(True)
-    fig.savefig(output/'temporal_transfer.pdf',bbox_inches='tight');fig.savefig(output/'temporal_transfer.png',dpi=300,bbox_inches='tight');plt.close(fig)
+    results=value['results']
+    fig,axes=plt.subplots(1,2,figsize=(7.12,2.6),sharey=True)
+    labels=['SEED-IV\nTemporal CNN · n = 15','FACED\nResidual TCN · n = 123']
+    for ax,outcome,title in zip(axes,['different_person_change','selection_minus_transfer'],
+                                ['a  Target change','b  Selection-to-transfer shortfall']):
+        rows={r['dataset']:r for r in results if r['outcome']==outcome}
+        if set(rows)!={'SEED-IV','FACED'}: raise AssertionError('Missing temporal outcomes')
+        for y,dataset,marker in [(1,'SEED-IV','o'),(0,'FACED','D')]:
+            summary=rows[dataset]['summary'];mean=summary['mean_pp'];lo,hi=summary['descriptive_ci95_pp']
+            ax.hlines(y,lo,hi,color='#245A81',linewidth=1.25,zorder=2)
+            ax.plot(mean,y,marker=marker,color='#245A81',markersize=5,zorder=3)
+            ax.text(mean,y-.22,f'{mean:+.2f} [{lo:+.2f}, {hi:+.2f}]',ha='center',va='top',fontsize=8)
+        ax.axvline(0,color='#7B8790',linewidth=.8,zorder=0)
+        ax.set_yticks([1,0],labels);ax.set_ylim(-.6,1.5)
+        ax.set_title(title,loc='left',weight='bold',pad=10)
+        ax.set_xlabel('BAcc change (pp)');ax.grid(axis='x',color='#E4E9ED',linewidth=.55);ax.set_axisbelow(True)
+        ax.margins(x=.24)
+    axes[1].tick_params(axis='y',left=False)
+    fig.subplots_adjust(left=.265,right=.985,top=.82,bottom=.22,wspace=.32)
+    fig.savefig(output/'temporal_transfer.pdf');fig.savefig(output/'temporal_transfer.png',dpi=300);plt.close(fig)
 
 
 def main():

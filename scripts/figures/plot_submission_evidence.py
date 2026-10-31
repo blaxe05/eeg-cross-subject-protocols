@@ -1,4 +1,4 @@
-"""Render complete paired evidence with explicit units and person aggregation."""
+"""Render complete paired evidence with explicit units and subject aggregation."""
 from __future__ import annotations
 import argparse
 from collections import defaultdict
@@ -44,7 +44,7 @@ def main():
 
     def save(fig, name):
         for extension in ['pdf', 'png']:
-            fig.savefig(args.output_dir / f'{name}.{extension}', dpi=240)
+            fig.savefig(args.output_dir / f'{name}.{extension}', dpi=300)
         plt.close(fig)
 
     def decorate(ax, vertical=True):
@@ -113,20 +113,20 @@ def main():
     fig, axes = plt.subplots(2, 2, figsize=(7.12, 4.5))
     for col, setting in enumerate(['SEED', 'SEED-IV']):
         for rownum, (family, contrasts, labels) in enumerate([
-            ('source_components', ['broader_people', 'more_examples', 'more_updates'], ['More subjects', 'More examples', 'More updates']),
-            ('adaptation_components', ['real_target_minus_proxy', 'proxy_loss_on_minus_off'], ['Target - proxy', 'Proxy: loss on - off'])]):
+            ('source_components', ['broader_people', 'more_examples', 'more_updates'], ['Source composition', 'Available examples', 'Training updates']),
+            ('adaptation_components', ['real_target_minus_proxy', 'proxy_loss_on_minus_off'], ['Target − proxy', 'Proxy: loss on − off'])]):
             ax = axes[rownum, col]
             decorate(ax)
             for j, contrast in enumerate(contrasts):
                 for model, color, marker, offset in MODELS:
                     point(ax, lookup[model, setting, family, contrast], len(contrasts) - 1 - j + offset, color, marker)
-            ax.set_yticks(range(len(labels)), labels[::-1], fontsize=8)
+            ax.set_yticks(range(len(labels)), labels[::-1], fontsize=8.5)
             ax.set_ylim(-.5, len(labels) - .5)
             ax.set_xlabel('Paired BAcc change (pp)')
             ax.set_title(f'{chr(97 + 2*rownum + col)}  {setting}: ' + ('source path' if rownum == 0 else 'auxiliary controls'),
                          loc='left', fontweight='bold')
     fig.legend(handles=handles, loc='upper center', ncol=2, frameon=False, bbox_to_anchor=(.58, 1.015))
-    fig.subplots_adjust(left=.20, right=.98, top=.88, bottom=.12, wspace=.73, hspace=.65)
+    fig.subplots_adjust(left=.22, right=.98, top=.88, bottom=.12, wspace=.93, hspace=.65)
     save(fig, 'training_controls')
 
     with (args.evidence_dir / 'learning_quality/instrument_target_seed_policy.csv').open(newline='', encoding='utf8') as f:
@@ -149,7 +149,7 @@ def main():
     for ax in axes:
         decorate(ax)
         ax.set_yticks(range(5), LABELS[::-1])
-    axes[0].set_title('a  Fixed-final instrument', loc='left', fontweight='bold')
+    axes[0].set_title('a  Reference performance', loc='left', fontweight='bold')
     axes[0].set_xlabel('Window BAcc above chance (pp)')
     axes[1].set_title('b  Prediction unit', loc='left', fontweight='bold')
     axes[1].set_xlabel('Trial minus window BAcc (pp)')
