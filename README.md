@@ -1,6 +1,6 @@
 # Cross-subject EEG emotion recognition: evaluation protocols
 
-Code and fixed experiment specifications for controlled evaluation studies in cross-subject EEG emotion recognition on SEED, SEED-IV, and FACED. The repository supports reproduction of source-subject allocation, checkpoint selection, target-data access, preprocessing, and subject-level evaluation. Historical DEAP utilities remain for provenance; DEAP quantitative results are excluded from the revised submission because local rating sources could not be independently authenticated. Licensed datasets and previously generated results are not distributed.
+Code and fixed experiment specifications for controlled evaluation studies in cross-subject EEG emotion recognition on SEED, SEED-IV, FACED and DREAMER. The repository supports reproduction of source-subject allocation, checkpoint selection, target-data access, preprocessing, and subject-level evaluation. Historical DEAP utilities remain for provenance; DEAP quantitative results are excluded from the revised submission because local rating sources could not be independently authenticated. Licensed datasets and previously generated results are not distributed.
 
 ## Repository contents
 
@@ -27,7 +27,7 @@ The offline checks validate fixed folds and leakage guards without accessing EEG
 
 ### Full retraining
 
-The controlled experiment runner uses three fixed training seeds and separates checkpoint selection, source-person composition, available examples, optimizer exposure, and unlabelled target input under a fixed adaptation objective:
+The controlled experiment runner uses three fixed training seeds and separates checkpoint selection, source-subject composition, available examples, optimizer exposure, and unlabelled target input under a fixed adaptation objective:
 
 ```bash
 python scripts/run_controlled_revision.py --project-root . --data-parent /path/to/dataset-parent --output-dir /path/to/local/controls --pilot --limit-targets 1 --seeds 2031
@@ -127,7 +127,7 @@ python scripts/figures/draw_contrast_flow.py --output-prefix path/to/figures/fig
 
 The plotter reads the summary values without retraining models or recomputing metrics; it writes vector PDFs and PNG previews. The flow diagram has no data dependency.
 
-### Cross-person checkpoint transfer
+### Cross-subject checkpoint transfer
 
 `scripts/analyze_cross_person_checkpoint.py` re-evaluates archived checkpoints on each reserved validation person. One person selects a checkpoint, the remaining validation people select a comparator, and both checkpoints are scored on a different outer target using the saved target epoch curve. SEED and SEED-IV each use 15 outer targets, three reserved validation people, and 40 checkpoints. The FACED DGCNN extension uses 123 outer targets, 12 reserved validation people, and eight checkpoints. Rotations are averaged within each outer target before resampling target means for a descriptive interval. The comparison changes the identity and number of validation people supporting selection; it does not isolate a pure person-identity effect or independent-training uncertainty.
 
@@ -174,7 +174,7 @@ The split figure shows the 20 paired differences in selected-minus-final target 
 
 `configs/selection_horizon_extension.json` defines four source-validation rules on the same candidates: peak BAcc, minimum predictive NLL, and patience-five variants of each. Pooled validation gives each subject equal weight. Individual-subject selectors remain secondary. NLL is computed from logits with stable log-softmax; native loss changes and BAcc percentage-point changes are reported separately.
 
-The SEED and SEED-IV extension covers both feature backbones, all 15 held-out subjects and seeds 2031–2033. It recovers validation loss from the 180 saved trajectories, retrains 180 matched paths to 80 budget units, and requires exact agreement with every saved model state in the first 40 units. Model, optimizer, random-generator and batch-stream states support exact continuation after interruption. The 20/40/80-unit comparison changes training exposure and candidate availability jointly. Patience stopping is emulated from chronological prefixes; its update counts are not measured wall-clock speedups.
+The SEED and SEED-IV extension covers both feature backbones, all 15 held-out subjects and seeds 2031ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“2033. It recovers validation loss from the 180 saved trajectories, retrains 180 matched paths to 80 budget units, and requires exact agreement with every saved model state in the first 40 units. Model, optimizer, random-generator and batch-stream states support exact continuation after interruption. The 20/40/80-unit comparison changes training exposure and candidate availability jointly. Patience stopping is emulated from chronological prefixes; its update counts are not measured wall-clock speedups.
 
 The schedule extension adds 720 matched fits. Each ramp is applied to both source-proxy and unlabelled-target arms, keeping domain-loss weight at one. A reversal cap of 0.1 tests schedule shape relative to fixed 0.1; a cap of one also changes magnitude. The scripts do not select a schedule by target performance. All outcomes are retained. The additional 56 paired contrasts have their own global Holm adjustment, alongside raw values and within-question sensitivity. The original 63-comparison adjustment is retained. These are exploratory analyses of previously examined cohorts; overlapping training subjects still limit population inference.
 
@@ -192,6 +192,44 @@ python scripts/analyze_selection_horizon_extension.py --run-dir /path/to/extensi
 Before supervising, copy the selection-horizon configuration to `OUTPUT/frozen_protocol.json` and use an unchanged code checkout. Reference folders under `--runs-root` are `controlled_revision_20261029/campaign_v1/production` for DGCNN and `architecture_replication_20261030/CDCN/production` for CDCN, followed by `SEED` or `SEEDIV`, `seed_N`, `target_N`, and the `checkpoint` or `adaptation` stage. These are outputs of the corresponding reference runners, not files supplied by this repository.
 
 After complete analysis, run `verify_selection_horizon_extension.py --run-dir OUTPUT --runs-root REFERENCES` to recompute scores from predictions, check stopping chronology and independently enumerate the paired tests and adjustments. It also exports path-free extended learning curves, with interval-mean objectives labelled separately from cumulative means. `scripts/figures/plot_selection_horizon.py --analysis-dir OUTPUT/analysis --output-dir FIGURES` produces vector policy, horizon and schedule plots, plus validation-loss and interval-objective curves when the complete trajectory export is present. Horizon points are offset vertically to keep coincident estimates visible. The renderer rejects incomplete coverage. No significance stars or target-selected schedule are used.
+
+### Binary FACED and DE+linear-SVM comparisons
+
+`configs/binary_faced_svm_extension.json` defines the follow-up. Binary FACED excludes neutral clips, maps the four negative categories to zero and the four positive categories to one, and retains all 123 subjects. DGCNN and CDCN each use three seeds and the same source partitions and eight update positions as their paired nine-class references: 738 trajectories. The update budget remains 968, including for the smaller retained binary training set; it is not described as eight passes over that set.
+
+DE+linear-SVM uses the same eligible feature windows and training/validation/target subjects as the neural references across six task settings. Its feature standardizer fits only the source-training anchors. Twelve ascending C values are evaluated on reserved source subjects, with equal-subject mean balanced accuracy and the first maximum selecting C before target scoring. This yields 322 deterministic outer-subject fits and 3,864 solver fits. Neural results average three seeds within each target; SVM fits are not repeated as additional replicates. Matching concerns data eligibility, information access and window-level scoring. Method-specific scaling, optimization and search budgets differ.
+
+Create the reference campaigns and DREAMER features using the preceding commands, then use an unchanged checkout and copy the binary/SVM configuration to `OUTPUT/frozen_protocol.json`. Reference folders under `--runs-root` follow the layouts described above, with DREAMER outputs in `dreamer_extension_20261030/MODEL/production/TASK`. Outputs and licensed inputs must remain outside this repository.
+
+```bash
+python scripts/run_binary_faced.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir OUTPUT --model DGCNN --seed 2031 --gate --targets sub000
+python scripts/run_binary_faced.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir OUTPUT --model DGCNN --seed 2031
+python scripts/run_matched_svm.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir OUTPUT --dataset FACED-binary --features /path/to/dreamer_stateless_features.npz
+```
+
+Repeat the binary runner for both models and all three seeds, and the matched SVM runner for all six configured tasks. The gate compares every saved state and target probability against an existing nine-class trajectory; this checks implementation consistency, not recovery of a published paper's numerical result. `supervise_faced_svm.py` supports separate `neural`, `matched_svm` and `native` phases. Its `--code-root` must point to the unchanged worker checkout containing the copied configuration; it adopts surviving workers after supervisor interruption. GPU concurrency is limited to two, CPU concurrency to four, and exclusive job locks prevent duplicates.
+
+The FACED published-reference branch reconstructs the supplied DE+SVM scripts separately. See the [FACED dataset paper](https://doi.org/10.1038/s41597-023-02650-w) and the [LIBLINEAR reference](https://jmlr.org/papers/v9/fan08a.html). It requires the provider DE files, presentation-order MAT files, processed recordings and supplied reference output CSVs. These materials are not redistributed. The extractor supplies five bands while a normalization script reshapes for four, and the final normalization exclusion differs from the classifier's 15-subject final fold. Both band interpretations and both final-fold prior exclusions are reported. The released whole-record transformations and held-out-label C selection are retained only in this qualified reconstruction, which is not a source-only baseline or certified exact reproduction. Legacy solver convergence warnings remain part of its outputs. Differences from published scores cannot be attributed to a single protocol choice.
+
+```bash
+python scripts/prepare_faced_native.py --data-root /path/to/FACED --output-dir OUTPUT
+python scripts/run_faced_native.py --input-dir OUTPUT/native/prepared --output-dir OUTPUT --task binary --bands 5
+```
+
+Run the native branch for binary/nine-class tasks and five/four bands, giving 44 fold records and 528 C fits. After every expected record is complete:
+
+```bash
+python scripts/verify_binary_faced_predictions.py --run-dir OUTPUT --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --model DGCNN
+python scripts/verify_faced_svm_predictions.py --run-dir OUTPUT --project-root /path/to/project --data-parent /path/to/dataset-parent --features /path/to/dreamer_stateless_features.npz --kind matched
+python scripts/verify_faced_svm_predictions.py --run-dir OUTPUT --project-root /path/to/project --data-parent /path/to/dataset-parent --kind native
+python scripts/analyze_binary_faced_svm.py --run-dir OUTPUT --runs-root /path/to/previous-runs --output-dir OUTPUT/analysis
+python scripts/verify_faced_svm_statistics.py --run-dir OUTPUT --runs-root /path/to/previous-runs
+python scripts/figures/plot_binary_faced_svm.py --analysis-dir OUTPUT/analysis --output-dir /path/to/local/figures
+```
+
+Run the neural prediction verifier for each model using the arguments displayed by `--help`. It recomputes every binary source-validation and target curve from saved states. The SVM verifier independently reconstructs source scalers and all validation C curves; its native branch independently reconstructs preprocessing and candidate predictions. Complete follow-up analysis requires all 738 neural, 322 matched SVM and 44 reconstruction records. Independent statistical verification rebuilds all 20 new contrast matrices and preserves the original 143 raw/adjusted results.
+
+The new 20-comparison exploratory family has separate mean and exact Pratt signed-rank Holm adjustments; the original 63/20/4/56 adjustments are unchanged. A joint 163-comparison adjustment is an additional exploratory sensitivity. Overlapping fitted source populations still constrain inference. Window BAcc is the matched comparison endpoint; secondary trial summaries average SVM decision margins and neural probabilities, respectively. All C values, reconstruction choices, outcomes and convergence notices are retained locally. The figure renderer requires complete independently verified results, uses paired-difference intervals and keeps model identities distinguishable by marker shape.
 
 ## License
 
