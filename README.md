@@ -182,7 +182,7 @@ Use a data-parent directory containing `data/SEED/`, not the `SEED` directory it
 python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase recovery
 python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase horizon
 python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase dann
-python scripts/analyze_selection_horizon_extension.py --run-dir /path/to/complete-extension --runs-root /path/to/previous-runs --output-dir /path/to/extension-analysis
+python scripts/analyze_selection_horizon_extension.py --run-dir /path/to/extension --runs-root /path/to/previous-runs --output-dir /path/to/extension/analysis
 ```
 
 `supervise_selection_horizon.py` runs the complete queue with at most two workers, an exclusive supervisor lock, first-case reproduction checks and progress logs. A failed deterministic reproduction check stops expansion. An interrupted supervisor adopts its surviving workers rather than launching duplicates. Complete results are required before statistical analysis.
