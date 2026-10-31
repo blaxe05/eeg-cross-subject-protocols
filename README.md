@@ -116,7 +116,7 @@ python scripts/figures/plot_controlled_revision.py --summary /path/to/local/cont
 
 The plotter checks complete target/seed coverage before rendering the checkpoint, source-control, adaptation, and target-distribution figures. It writes vector PDFs and PNG previews. Summary files and rendered figures stay outside this public repository.
 
-Architecture and experimental-design schematics can be generated as editable self-contained HTML and SVG with `python scripts/figures/draw_replication_design.py --output-dir /path/to/local/illustrations`. They describe source-code structure and information boundaries, not experimental results.
+Architecture, subject-partition/update-budget, and experimental-design schematics can be generated as editable self-contained HTML and SVG with `python scripts/figures/draw_replication_design.py --output-dir /path/to/local/illustrations`. They describe source-code structure and information boundaries, not experimental results.
 
 The older code-only figure utilities are also preserved in `scripts/figures/`. The historical result plotter requires the locally generated `C1_EQUAL_SUBJECT_PRIMARY.csv`, `C1_CANDIDATE_BUDGET_SUMMARY.csv`, `C2_MATCHED_STATS.csv`, `C3_DANN_STATS.csv`, `PER_CLASS_CANONICAL.csv`, and `CANONICAL_RESULT_SUMMARY.csv` in one directory. These derived result files are not distributed here.
 

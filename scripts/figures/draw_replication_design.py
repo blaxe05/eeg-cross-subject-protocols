@@ -114,12 +114,70 @@ def design():
                   'Three panels distinguish source-only checkpoint selection and target scoring, a source-training path, and parallel auxiliary-input adaptation controls. The source path shows an ordered comparison, not sequential fitting of all four arms; only C and D share fitted optimizer history.')
 
 
+def partition_budget():
+    """Reference fold counts and feature-model schedules; no outcome data."""
+    roles = [('Training · fit parameters', BLUE, '#EAF1F7'),
+             ('Validation · select checkpoint', ORANGE, '#FBF0E7'),
+             ('Target · score only', MUTED, '#52616D')]
+    parts = [text(24, 28, 'a   Reference subject partitions', 20, 'bold', anchor='start')]
+    for x, (label, stroke, fill) in zip([24, 352, 744], roles):
+        parts.append(f'<rect x="{x}" y="54" width="16" height="16" fill="{fill}" stroke="{stroke}" stroke-width="1.25"/>')
+        parts.append(text(x+26, 68, label, 17, anchor='start'))
+    specs = [('SEED / SEED-IV', 'each n = 15', (11, 3, 1), 100),
+             ('FACED', 'n = 123', (110, 12, 1), 164),
+             ('DREAMER V / A', 'shared n = 23', (17, 5, 1), 228)]
+    for label, total_label, counts, y in specs:
+        parts += [text(24, y+18, label, 18, 'bold', anchor='start'),
+                  text(24, y+41, total_label, 16.5, color=MUTED, anchor='start')]
+        total = sum(counts);x = 260
+        for role, (count, (_, stroke, fill)) in enumerate(zip(counts, roles)):
+            width = 704*count/total
+            parts.append(f'<rect data-role-index="{role}" data-subject-count="{count}" x="{x:.4f}" y="{y}" width="{width:.4f}" height="40" fill="{fill}" stroke="{stroke}" stroke-width="1.25"/>')
+            if width >= 24:
+                parts.append(text(x+width/2, y+27, str(count), 19, 'bold', color='white' if role==2 else stroke))
+            else:
+                parts.append(f'<path d="M{x+width/2:.4f},{y+20} H982" stroke="{MUTED}" stroke-width="1.25" fill="none"/>')
+                parts.append(text(998, y+27, str(count), 19, 'bold'))
+            x += width
+    parts += [text(24, 298, 'Roles are disjoint within each reference fold; every subject is evaluated as the outer target.', 17, anchor='start'),
+              '<path d="M24,322 H1000" stroke="#D9E0E5" stroke-width="1"/>',
+              text(24, 358, 'b   Update budgets and saved checkpoints', 20, 'bold', anchor='start'),
+              text(24, 400, 'Sₜ = E × ⌈Nₜ / 256⌉', 23, 'bold', anchor='start'),
+              text(544, 394, 'Checkpoint positions / own update budget', 17, anchor='start'),
+              text(24, 430, 'Task', 17, 'bold', anchor='start'),
+              text(300, 430, 'Nₜ', 17, 'bold', anchor='end'),
+              text(360, 430, 'E', 17, 'bold', anchor='end'),
+              text(476, 430, 'Updates Sₜ', 17, 'bold', anchor='end'),
+              '<path d="M24,438 H476" stroke="#7B8790" stroke-width="1"/>']
+    budgets = [('SEED', 9416, 40, 1480), ('SEED-IV', 7139, 40, 1120),
+               ('FACED', 30800, 8, 968), ('DREAMER V/A', 3060, 40, 480)]
+    for y, (label, anchors, units, updates) in zip([464, 496, 528, 560], budgets):
+        assert updates == units*((anchors+255)//256)
+        parts += [text(24, y, label, 17.5, anchor='start'),
+                  text(300, y, f'{anchors:,}', 17.5, anchor='end'),
+                  text(360, y, str(units), 17.5, anchor='end'),
+                  text(476, y, f'{updates:,}', 17.5, anchor='end')]
+    for count, y in [(40, 458), (8, 536)]:
+        label = '40 checkpoints · SEED / SEED-IV / DREAMER' if count==40 else '8 checkpoints · FACED'
+        parts.append(text(544, y-25, label, 17, anchor='start'))
+        parts.append(f'<path d="M560,{y} H964" stroke="#7B8790" stroke-width="1.25"/>')
+        for k in range(1, count+1):
+            x = 560+404*k/count
+            parts.append(f'<circle data-checkpoint-count="{count}" data-checkpoint="{k}" data-fraction="{k/count:.8f}" cx="{x:.4f}" cy="{y}" r="{5 if k==count else 2.7}" fill="{INK if k==count else BLUE}"/>')
+        parts += [text(560, y+25, '0', 16, color=MUTED),
+                  text(964, y+25, 'Sₜ', 16, color=MUTED)]
+    parts += [text(24, 600, 'Nₜ counts training anchors; each update processes 256 examples. The final checkpoint is included.', 17, anchor='start')]
+    svg = canvas(624, parts, 'Reference subject partitions, optimizer-update budgets and checkpoint schedules',
+                 'Partition segments are proportional within each dataset. Counts are training, reserved source validation and target subjects: 11/3/1 for SEED and SEED-IV, 110/12/1 for FACED and 17/5/1 for both DREAMER tasks. Reference update counts are 1480, 1120, 968 and 480. Forty or eight saved checkpoints span a schedule normalized to its own final update; no initial checkpoint is selected. These are feature-based reference schedules, not the temporal-model schedules.')
+    return svg.replace('id="title"', 'id="partition-budget-title"').replace('id="desc"', 'id="partition-budget-desc"').replace('aria-labelledby="title desc"', 'aria-labelledby="partition-budget-title partition-budget-desc"')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output-dir', type=Path, required=True)
     args = p.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    for name, svg in [('backbone_architectures', architecture()), ('controlled_experiment_design', design())]:
+    for name, svg in [('backbone_architectures', architecture()), ('controlled_experiment_design', design()), ('subject_partitions_budgets', partition_budget())]:
         height = re.search(r'height="(\d+)"', svg)[1]
         html = ('<!doctype html><html><head><meta charset="utf-8"><style>'
                 f'@page{{size:7.12in {int(height)/1024*7.12:.5f}in;margin:0}}'
