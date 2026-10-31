@@ -168,6 +168,29 @@ python scripts/figures/plot_extension_results.py --kind split --analysis-dir /pa
 python scripts/figures/plot_extension_results.py --kind temporal --analysis-dir /path/to/temporal-analysis --output-dir /path/to/figures
 ```
 
+### Selection policies, longer horizons and adversarial schedules
+
+`configs/selection_horizon_extension.json` defines four source-validation rules on the same candidates: peak BAcc, minimum predictive NLL, and patience-five variants of each. Pooled validation gives each subject equal weight. Individual-subject selectors remain secondary. NLL is computed from logits with stable log-softmax; native loss changes and BAcc percentage-point changes are reported separately.
+
+The SEED and SEED-IV extension covers both feature backbones, all 15 held-out subjects and seeds 2031–2033. It recovers validation loss from the 180 saved trajectories, retrains 180 matched paths to 80 budget units, and requires exact agreement with every saved model state in the first 40 units. Model, optimizer, random-generator and batch-stream states support exact continuation after interruption. The 20/40/80-unit comparison changes training exposure and candidate availability jointly. Patience stopping is emulated from chronological prefixes; its update counts are not measured wall-clock speedups.
+
+The schedule extension adds 720 matched fits. Each ramp is applied to both source-proxy and unlabelled-target arms, keeping domain-loss weight at one. A reversal cap of 0.1 tests schedule shape relative to fixed 0.1; a cap of one also changes magnitude. The scripts do not select a schedule by target performance. All outcomes are retained. The additional 56 paired contrasts have their own global Holm adjustment, alongside raw values and within-question sensitivity. The original 63-comparison adjustment is retained. These are exploratory analyses of previously examined cohorts; overlapping training subjects still limit population inference.
+
+Use a data-parent directory containing `data/SEED/`, not the `SEED` directory itself. The project root supplies the prepared SEED-IV features and the pinned LibEER dependency. Previously generated runs are read only, and all new outputs must be outside this repository.
+
+```bash
+python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase recovery
+python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase horizon
+python scripts/run_selection_horizon_extension.py --project-root /path/to/project --data-parent /path/to/dataset-parent --runs-root /path/to/previous-runs --output-dir /path/to/extension --model DGCNN --dataset SEED --seed 2031 --phase dann
+python scripts/analyze_selection_horizon_extension.py --run-dir /path/to/complete-extension --runs-root /path/to/previous-runs --output-dir /path/to/extension-analysis
+```
+
+`supervise_selection_horizon.py` runs the complete queue with at most two workers, an exclusive supervisor lock, first-case reproduction checks and progress logs. A failed deterministic reproduction check stops expansion. An interrupted supervisor adopts its surviving workers rather than launching duplicates. Complete results are required before statistical analysis.
+
+Before supervising, copy the selection-horizon configuration to `OUTPUT/frozen_protocol.json` and use an unchanged code checkout. Reference folders under `--runs-root` are `controlled_revision_20261029/campaign_v1/production` for DGCNN and `architecture_replication_20261030/CDCN/production` for CDCN, followed by `SEED` or `SEEDIV`, `seed_N`, `target_N`, and the `checkpoint` or `adaptation` stage. These are outputs of the corresponding reference runners, not files supplied by this repository.
+
+After complete analysis, run `verify_selection_horizon_extension.py --run-dir OUTPUT --runs-root REFERENCES` to recompute scores from predictions, check stopping chronology and independently enumerate the paired tests and adjustments. It also exports path-free extended learning curves, with interval-mean objectives labelled separately from cumulative means. `scripts/figures/plot_selection_horizon.py --analysis-dir OUTPUT/analysis --output-dir FIGURES` produces the vector policy, horizon and schedule plots. It rejects incomplete coverage. No significance stars or target-selected schedule are used.
+
 ## License
 
 Original author-written code in this repository is released under the [MIT License](LICENSE). The CDCN evaluation wrapper in `src/tac_revision/models.py` adapts methods from LibEER; its upstream copyright and MIT terms are preserved in [third-party notices](docs/THIRD_PARTY.md). Third-party libraries, benchmark implementations, and datasets remain subject to their respective licenses and terms. This repository does not relicense or redistribute SEED, SEED-IV, FACED, DEAP, LibEER, or other third-party materials. Fold manifests are experiment specifications, not dataset redistribution.

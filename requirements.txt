@@ -12,3 +12,4 @@ torch-geometric>=2.3
 mne>=1.5
 tqdm>=4.66
 pytest>=8.0
+psutil>=5.9
