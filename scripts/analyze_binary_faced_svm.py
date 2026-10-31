@@ -33,6 +33,16 @@ def classwise_rows(dataset,model,target,seed,y,scores):
     return rows
 
 
+def native_candidate_summary(predictions,labels):
+    if predictions.ndim!=3 or labels.ndim!=1 or predictions.shape[-1]!=len(labels) or not all(predictions.shape):
+        raise ValueError('Expected candidate-by-subject-by-window predictions and common window labels')
+    correct=predictions==labels
+    # Select from the released global window-accuracy criterion directly.
+    # Averaging subject proportions first can break an exact C tie through roundoff.
+    choice=int(np.argmax(correct.mean(axis=(1,2))))
+    return correct.mean(axis=2),choice
+
+
 def complete_paths(root):
     neural=sorted((root/'neural/production').glob('*/seed_*/target_*/result.json'))
     svm=sorted((root/'matched_svm/production').glob('*/target_*/result.json'))
@@ -164,8 +174,8 @@ def main():
         r=shared.read(path);assert r['status']=='complete' and r['target_labels_used_for_C_selection']
         key=(r['task'],r['bands'],r['fold'],r['normalization_prior']);assert key not in native
         with np.load(path.parent/'scoring_arrays.npz',allow_pickle=False) as z:
-            pred,y=z['predictions'],z['labels'];scores=(pred==y).mean(axis=2)
-            choice=int(scores.mean(axis=1).argmax());assert choice==r['selected_index']
+            pred,y=z['predictions'],z['labels'];scores,choice=native_candidate_summary(pred,y)
+            assert choice==r['selected_index']
             assert np.allclose(100*scores[choice],r['subject_accuracy_pct'],atol=1e-12)
         native[key]=(r,scores[choice])
         for target,accuracy in zip(r['held_out_subjects'],scores[choice]):

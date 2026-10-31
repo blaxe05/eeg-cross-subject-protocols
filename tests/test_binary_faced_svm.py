@@ -11,7 +11,7 @@ from src.tac_revision.provider_training import Panel
 from scipy.stats import rankdata
 from verify_faced_svm_statistics import exact_pratt,direct_mean_test,direct_holm
 from analyze_submission_evidence import paired_summary
-from analyze_binary_faced_svm import classwise_rows
+from analyze_binary_faced_svm import classwise_rows,native_candidate_summary
 
 
 def test_binary_mapping_retains_subjects_trials_and_feature_values():
@@ -87,3 +87,13 @@ def test_classwise_export_retains_imbalance_and_separates_recall_from_accuracy()
     assert [r['predicted_windows'] for r in rows]==[1,3]
     np.testing.assert_allclose([r['recall_pct'] for r in rows],[100/3,100],rtol=0,atol=1e-12)
     np.testing.assert_allclose([r['f1_pct'] for r in rows],[50,50],rtol=0,atol=1e-12)
+
+
+def test_native_selection_preserves_earliest_exact_global_accuracy_tie():
+    counts=np.array([[1,1,3],[0,0,5]])
+    predictions=np.ones((2,3,7),dtype=int)
+    for candidate in range(2):
+        for subject in range(3):predictions[candidate,subject,:counts[candidate,subject]]=0
+    scores,chosen=native_candidate_summary(predictions,np.zeros(7,dtype=int))
+    np.testing.assert_allclose(scores,counts/7,atol=0,rtol=0)
+    assert chosen==0
