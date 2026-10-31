@@ -120,4 +120,3 @@ def save_arrays(path, **arrays):
 
 def commit_result(folder, record):
     base.write_json(folder/'result.json', record)
-
