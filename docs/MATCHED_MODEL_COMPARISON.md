@@ -6,6 +6,8 @@ The supported models are EEGNet, TSception, RGNN, NSAL-DGAT and MS-MDA, together
 
 The six task settings are SEED, SEED-IV, FACED nine-class/binary and DREAMER valence/arousal. SEED uses the first session; SEED-IV uses all sessions. The common FACED inputs retain the first 30 scalp-labelled channels and exclude the two HEOR/HEOL columns in the supplied 32-column array. Earlier analyses using that full array remain separate. DREAMER retains the last 60 stimulus seconds, with high labels defined by ratings greater than three.
 
+The earlier supplied SEED-IV features have four-second support, as specified by the [dataset provider](https://bcmi.sjtu.edu.cn/home/seed/seed-iv.html). Their counts are therefore not interchangeable with one-second raw-window counts. The common-input comparison constructs new features from the aligned raw windows; it does not equate the two representations.
+
 ## Reference software
 
 Fetch the exact revisions listed in `scripts/fetch_matched_references.py` to a directory outside this repository. Upstream code remains subject to its own terms and is not vendored here. Reference model code, generated indices, data, weights and results belong in the external working directory.
@@ -26,6 +28,7 @@ NSAL-DGAT and MS-MDA target arms are unlabelled-target adaptation procedures. So
 4. Run `scripts/make_matched_model_jobs.py` to freeze folds, update budgets, seeds and roles. `configs/matched_model_budgets.json` supplies optimizer-update hyperparameters, not scores. Existing trajectory metadata can optionally verify those budgets; reproducing the design does not require another researcher's result files. The generated protocol/jobs files belong in the local working directory.
 5. Run `scripts/verify_matched_model_implementations.py`, the focused unit tests, and `scripts/pilot_matched_models.py`. Pilots train on real source inputs but never score target labels. The process-restart check requires identical candidate-state hashes.
 6. Freeze source/configuration hashes, then run `scripts/supervise_matched_models.py`. Workers use exclusive group leases, complete optimizer/RNG/sampler/memory-bank checkpoints and atomic records. All candidate states and prediction arrays are retained. A supervisor restart adopts matching live workers.
+7. Run `scripts/verify_matched_model_results.py` with the frozen `--source-dir`, the external `--references` directory and an external `--report` path. `--mode sample` checks available records without certifying a campaign. `--mode complete` requires every supported job and re-evaluates every neural candidate on the full validation and target inputs. Both modes independently reconstruct training-only normalizers, source choices, window/trial metrics and SVM candidate decisions. Use complete verification before statistical synthesis.
 
 Use the supplied CLI `--help` for each program's arguments. The local supervisor expects passing implementation, unit-test and pilot records and a matching source manifest before releasing production jobs. Windows runs use sequential MKL and a single OpenMP runtime; the unsupported duplicate-runtime override is not used.
 
