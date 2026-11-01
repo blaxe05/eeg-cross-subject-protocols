@@ -38,3 +38,26 @@ def test_full_verification_certificate_is_identity_complete():
     assert report['complete_campaign'] is True
     assert report['scope']=='supported_jobs_only'
     assert report['records_verified']==2 and report['supported_records_still_missing']==0
+
+
+def test_component_certification_keeps_global_campaign_incomplete():
+    report=verification_report('component',['a','b','c'],passed('a','b'),['c'],['a','b'])
+    assert report['complete_component'] is True and report['complete_campaign'] is False
+    assert report['records_planned']==3 and report['component_records_verified']==2
+
+
+def test_component_mode_never_certifies_entire_campaign():
+    report=verification_report('component',['a','b'],passed('a','b'),[],['a','b'])
+    assert report['supported_outputs_complete'] and report['complete_campaign'] is False
+
+
+@pytest.mark.parametrize('component,checks,missing',[
+    (['a','b'],passed('a'),['b']),
+    (['a','b'],passed('a'),[]),
+    (['a'],passed('a','b'),[]),
+    (['outside'],passed('a'),[]),
+    (['a','a'],passed('a'),[]),
+    ([],passed('a'),[]),
+])
+def test_component_scope_rejects_missing_or_misassigned_evidence(component,checks,missing):
+    with pytest.raises(ValueError):verification_report('component',['a','b'],checks,missing,component)
