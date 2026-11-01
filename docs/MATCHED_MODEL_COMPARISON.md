@@ -65,3 +65,13 @@ python scripts/verify_common_input_statistics.py --run-dir /path/to/complete-cam
 ```
 
 The verifier has an exclusive report lock and publishes its certificate only after all checks pass. Keep its source and report alongside the local analysis. Passing this check covers the supported numerical evidence; interpretation review remains necessary, and unresolved MGGL requirements still prevent completion of the six-model request.
+
+## Result figures
+
+`scripts/figures/plot_common_input_models.py` requires that complete statistical certificate and matching hashes for all five analysis artifacts. It exports vector PDF/SVG figures and PNG previews with consistent 9-point typography. Six aligned task panels retain common scales and fixed model order. Open/filled markers and distinct shapes supplement color, and horizontal intervals are the descriptive 95% subject-bootstrap intervals.
+
+```bash
+python scripts/figures/plot_common_input_models.py --analysis-dir /path/to/new-analysis --verification-report /path/to/statistical-verification.json --output-dir /path/to/local/figures
+```
+
+The figures display all 84 individual/pooled checkpoint-transfer estimates, 48 procedure-performance contrasts and 18 auxiliary-population contrasts. The additional 42 shortfall contrasts remain in the complete statistical tables. Source-only and TA-U roles are stated explicitly; all outcomes and both signs are retained. No significance stars or published-score rankings are used. Existing Figures 6 and 7 are not modified by this renderer. Generated inputs, figures and numerical outputs remain outside the code repository.
