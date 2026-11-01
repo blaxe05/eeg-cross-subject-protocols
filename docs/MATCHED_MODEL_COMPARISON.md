@@ -1,0 +1,32 @@
+# Common-input model comparison
+
+The comparison uses subject-disjoint training, source validation and target scoring. Raw-input models receive one-second signal windows; feature models receive stateless differential entropy derived from those same windows. Normalization is fitted on training anchors only. Equal-subject source-validation balanced accuracy selects checkpoints, with earliest ties. Target labels enter only after checkpoint choices have been saved.
+
+The supported models are EEGNet, TSception, RGNN, NSAL-DGAT and MS-MDA, together with common-input DGCNN/CDCN and linear-SVM comparators. MGGL is reserved pending sufficient author-reference information. The software deliberately raises an error for MGGL instead of substituting a different network. Published scores are separate from executions of these programs.
+
+The six task settings are SEED, SEED-IV, FACED nine-class/binary and DREAMER valence/arousal. SEED uses the first session; SEED-IV uses all sessions. The common FACED inputs retain the first 30 scalp-labelled channels and exclude the two HEOR/HEOL columns in the supplied 32-column array. Earlier analyses using that full array remain separate. DREAMER retains the last 60 stimulus seconds, with high labels defined by ratings greater than three.
+
+## Reference software
+
+Fetch the exact revisions listed in `scripts/fetch_matched_references.py` to a directory outside this repository. Upstream code remains subject to its own terms and is not vendored here. Reference model code, generated indices, data, weights and results belong in the external working directory.
+
+- EEGNet: [author architecture](https://github.com/vlawhern/arl-eegmodels); the PyTorch port preserves grouped depthwise filters, temporal kernel duration, layer order, flatten order and max-norm constraints. An independent NumPy forward calculation checks the port.
+- TSception: [author network](https://github.com/yi-ding-cs/TSception); bilateral pairs are ordered left then right, excluding midline/unpaired channels as required by its spatial filters.
+- RGNN: [author graph implementation](https://github.com/zhongpeixiang/RGNN); a dense, signed-degree equivalent is tested against its outputs and gradients. The graph-only arm is source-only; optional node-wise RevGrad arms use either unlabelled target signals or a matched source proxy. Binary supervision follows the reference one-hot rule. Nine-class label smoothing is an explicit extension because the reference provides no nine-class emotion-distance matrix.
+- NSAL-DGAT: [author model](https://github.com/YYingDL/NSAL-DGAT); fixes explicitly preserve electrode/band axes, parameterize dataset dimensions, save otherwise unregistered graph/bank state, preserve training mode during bank updates, handle zero-degree graph columns, supply logits to a logits-based loss and replace global adaptive max pooling with an equivalent deterministic operation. The encoder/classifier is checked against the original reference. These are qualified reference-based runs, not a claim of exact published-score reproduction.
+- MS-MDA: [author implementation](https://github.com/VoiceBeer/MS-MDA); retains the shared extractor, every source-specific extractor/classifier, marginal-distribution and cross-branch discrepancy terms, and probability averaging. Its loss, input gradients and ensemble outputs are checked against the reference. Input and class dimensions are parameterized for the declared datasets.
+
+NSAL-DGAT and MS-MDA target arms are unlabelled-target adaptation procedures. Source-proxy arms retain their objectives and auxiliary-example counts. They are not silently described as source-only versions of the published methods. Multi-source batches remain domain-specific, while other methods use pooled source batches; architecture-level causal attribution is inappropriate. Domain-specific batches wrap within the source subject when there are fewer unique anchors than the batch size; unique anchors and processed-example counts are reported separately.
+
+## Execution
+
+1. Install the repository requirements and acquire each dataset through its provider. Create the usual dataset indices and raw-window caches with the dataset preparation tools. Keep these local.
+2. Fetch the pinned reference software with `scripts/fetch_matched_references.py`.
+3. Run `scripts/prepare_matched_models.py` to align raw/DE windows and verify raw-cache alignment. It requires the local project inputs and the pinned LibEER directory for the anatomical SEED prior.
+4. Run `scripts/make_matched_model_jobs.py` to freeze folds, update budgets, seeds and roles. `configs/matched_model_budgets.json` supplies optimizer-update hyperparameters, not scores. Existing trajectory metadata can optionally verify those budgets; reproducing the design does not require another researcher's result files. The generated protocol/jobs files belong in the local working directory.
+5. Run `scripts/verify_matched_model_implementations.py`, the focused unit tests, and `scripts/pilot_matched_models.py`. Pilots train on real source inputs but never score target labels. The process-restart check requires identical candidate-state hashes.
+6. Freeze source/configuration hashes, then run `scripts/supervise_matched_models.py`. Workers use exclusive group leases, complete optimizer/RNG/sampler/memory-bank checkpoints and atomic records. All candidate states and prediction arrays are retained. A supervisor restart adopts matching live workers.
+
+Use the supplied CLI `--help` for each program's arguments. The local supervisor expects passing implementation, unit-test and pilot records and a matching source manifest before releasing production jobs. Windows runs use sequential MKL and a single OpenMP runtime; the unsupported duplicate-runtime override is not used.
+
+Balanced accuracy, accuracy, Macro-F1 and trial summaries are calculated from held-out predictions. Seed and validation-selector repetitions are averaged within target subjects. Follow-up tests use separate prospective families and leave earlier adjustments intact; overlapping source-training populations still constrain inference. Identical update counts do not establish convergence or equal wall-clock compute.

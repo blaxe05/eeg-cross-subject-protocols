@@ -234,3 +234,7 @@ The new 20-comparison exploratory family has separate mean and exact Pratt signe
 ## License
 
 Original author-written code in this repository is released under the [MIT License](LICENSE). The CDCN evaluation wrapper in `src/tac_revision/models.py` adapts methods from LibEER; its upstream copyright and MIT terms are preserved in [third-party notices](docs/THIRD_PARTY.md). Third-party libraries, benchmark implementations, and datasets remain subject to their respective licenses and terms. This repository does not relicense or redistribute SEED, SEED-IV, FACED, DEAP, LibEER, or other third-party materials. Fold manifests are experiment specifications, not dataset redistribution.
+
+## Common-input model comparison
+
+The [comparison workflow](docs/MATCHED_MODEL_COMPARISON.md) provides pinned EEGNet, TSception, RGNN, NSAL-DGAT and MS-MDA interfaces, common-input DGCNN/CDCN/SVM comparators, reference-equivalence checks and resumable subject-disjoint workers. MGGL requires sufficient author-reference information and is not replaced by a proxy network. Keep generated inputs, weights and results in an external working directory.
