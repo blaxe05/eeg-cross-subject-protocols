@@ -47,3 +47,11 @@ Individual and pooled checkpoint choices use source-validation BAcc only, with e
 The planned comparison inventory retains 144 checkpoint, 60 procedure-performance and 18 auxiliary-population slots. Procedure-performance differences compare pooled source-BAcc-selected window BAcc between the declared model/reference arms. Auxiliary-population differences compare final checkpoints in target and source-proxy arms. SVM scores provide descriptive context, without an added retrospective hypothesis family. The original 163 comparisons and their separate corrections remain unchanged.
 
 MGGL-dependent slots remain missing unless a defensible implementation becomes available. Without MGGL, there are 192 supported new contrasts and 30 unresolved slots. Holm calculations retain the planned family sizes; arithmetic padding is never exported as an observed effect or p-value. Raw and adjusted probabilities must accompany all observed contrasts. Descriptive subject-bootstrap intervals and conditional paired tests do not establish independence of overlapping source-training populations, equivalence from nonsignificance, or optimal architecture performance.
+
+After complete prediction verification, `scripts/analyze_common_input_models.py` reconstructs selector effects, checks paired conditions and exports every supported target/seed vector, absolute outcome and raw/adjusted test. `configs/matched_model_analysis.json` fixes aggregation, descriptive bootstrap and conditional test settings. Absolute SVM summaries contain one deterministic fit per subject; neural summaries average three seeds within that subject.
+
+```bash
+python scripts/analyze_common_input_models.py --run-dir /path/to/complete-campaign --prediction-proof /path/to/complete-prediction-proof.json --source-dir /path/to/frozen-training-source --output-dir /path/to/new-analysis
+```
+
+The program rejects incomplete manifests, component-only verification and changed result/array hashes. Its report explicitly marks statistical calculations as awaiting independent verification and keeps the six-requested-model scope incomplete while MGGL is unresolved. Independently reconstruct the exported statistics and review interpretation before using findings in a manuscript. It does not modify earlier results or their correction families.
