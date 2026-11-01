@@ -50,6 +50,26 @@ def compare_trials(labels,values,trials,reported,decision=False):
     compare_metrics(np.asarray(actual_y),np.asarray(actual_pred),reported)
 
 
+def verification_report(mode,planned_ids,checks,missing_ids):
+    """Distinguish available outputs from completely verified evidence."""
+    planned=list(planned_ids);missing=list(missing_ids);verified=[row['id'] for row in checks]
+    if mode not in ['sample','complete']:raise ValueError('Unknown verification mode')
+    for values in [planned,missing,verified]:
+        if len(values)!=len(set(values)):raise ValueError('Duplicate verification identities')
+    if not set(verified).issubset(planned) or not set(missing).issubset(planned):
+        raise ValueError('Verification contains an unplanned identity')
+    if set(verified)&set(missing):raise ValueError('A missing output cannot be verified')
+    if any(row['status']!='pass' for row in checks):raise ValueError('Every reported check must pass')
+    fully_verified=bool(planned) and not missing and set(verified)==set(planned)
+    if mode=='complete' and not fully_verified:raise ValueError('Complete verification requires every planned identity')
+    return {'status':'pass','mode':mode,'scope':'supported_jobs_only',
+            'complete_campaign':mode=='complete' and fully_verified,
+            'supported_outputs_complete':not missing,
+            'records_planned':len(planned),'records_available':len(planned)-len(missing),
+            'records_verified':len(checks),'supported_records_still_missing':len(missing),
+            'no_partial_outcome_interpretation':True,'checks':checks}
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     for arg in ['output-dir','source-dir','references']:p.add_argument('--'+arg,type=Path,required=True)
@@ -78,6 +98,7 @@ def main():
     banks={};normalizers={};checks=[]
     for job,folder in available:
         record=read(folder/'result.json');dataset=job['dataset'];model_name=job['model'];raw=model_name in ['EEGNet','TSception']
+        result_digest=sha(folder/'result.json')
         if dataset not in banks:banks[dataset]=inputs.InputBank(root/'inputs',dataset)
         bank=banks[dataset]
         fold=job['fold'];mask=np.isin(bank.subject,fold['train'])
@@ -116,7 +137,8 @@ def main():
             predicted=(decision[:,0]>0).astype(int) if bank.classes==2 else decision.argmax(1)
             assert np.array_equal(bank.y[target],data['target_labels']);compare_metrics(bank.y[target],predicted,record['pooled_window'])
             compare_trials(bank.y[target],decision,data['target_trial'],record['pooled_trial'],True)
-            checks.append({'id':job['id'],'status':'pass','all_C_choices_and_target_decisions_recomputed':True})
+            checks.append({'id':job['id'],'status':'pass','result_sha256':result_digest,
+                           'all_C_choices_and_target_decisions_recomputed':True})
             continue
         assert sha(folder/'normalizer.npz')==record['normalizer_sha256']
         assert sha(folder/'scoring_arrays.npz')==record['scoring_arrays_sha256']
@@ -153,11 +175,13 @@ def main():
                     if probability:assert np.allclose(actual,expected[indices],rtol=2e-4,atol=2e-5),(job['id'],step,'probability')
                     else:assert np.array_equal(actual.argmax(1),expected[indices]),(job['id'],step,'validation classes')
                     predictions_checked+=len(indices)
-        checks.append({'id':job['id'],'status':'pass','all_candidate_choices_recomputed':True,
+        checks.append({'id':job['id'],'status':'pass','result_sha256':result_digest,'all_candidate_choices_recomputed':True,
                        'candidate_states':len(record['candidate_steps']),'model_predictions_recomputed':predictions_checked})
         del model;torch.cuda.empty_cache();print('VERIFIED',job['id'],flush=True)
-    report={'status':'pass','mode':a.mode,'complete_campaign':not missing,'records_verified':len(checks),
-            'supported_records_still_missing':len(missing),'no_partial_outcome_interpretation':True,'checks':checks}
+    report=verification_report(a.mode,[j['id'] for j in jobs],checks,[j['id'] for j,_ in missing])
+    report.update({'verification_script_sha256':sha(Path(__file__)),
+                   'source_manifest_sha256':sha(root/'source_manifest.json'),
+                   'protocol_sha256':sha(root/'protocol.json'),'jobs_sha256':sha(root/'jobs.json')})
     a.report.parent.mkdir(parents=True,exist_ok=True);a.report.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({k:v for k,v in report.items() if k!='checks'}))
 
