@@ -36,6 +36,21 @@ Once all SVM outputs exist, `--mode component --component SVM` verifies every cl
 
 Use the supplied CLI `--help` for each program's arguments. The local supervisor expects passing implementation, unit-test and pilot records and a matching source manifest before releasing production jobs. Windows runs use sequential MKL and a single OpenMP runtime; the unsupported duplicate-runtime override is not used.
 
+The optional `--scheduling-config PATH` changes operational concurrency and queue priority without changing frozen workers, folds, seeds, inputs, optimizer updates or candidate positions. For example, the JSON below permits two nine-class FACED workers and one binary FACED worker, with feature models first in the binary queue:
+
+```json
+{
+  "gpu_workers": 3,
+  "dataset_gpu_limits": {"FACED": 2, "FACED-binary": 1},
+  "priority_datasets": ["FACED-binary"],
+  "dataset_model_priority": {"FACED-binary": ["DGCNN", "RGNN", "NSAL-DGAT", "CDCN", "EEGNet", "TSception", "MS-MDA"]}
+}
+```
+
+Dataset-specific model priorities apply across seeds; unlisted models retain their normal relative order. The file is reloaded each poll. Write changes atomically. Invalid or temporarily unreadable changes pause new launches and retain every live worker. Lowered limits take effect as existing groups finish; workers are never killed to satisfy a new limit. Dataset limits are caps, so revise them when the other dataset finishes to avoid leaving available capacity idle. Without a configuration file, the original queue order and CLI concurrency apply.
+
+Additional workers share the same GPU. Free memory alone does not establish a speedup: compare observed combined throughput, GPU memory and worker durations before increasing limits, and preserve the sequential-runtime and concurrency records separately from scientific results. A supervisor may be restarted after confirming its PID and command line; the replacement must adopt existing workers using the original immutable `--source-dir` and existing leases.
+
 Balanced accuracy, accuracy, Macro-F1 and trial summaries are calculated from held-out predictions. Seed and validation-selector repetitions are averaged within target subjects. Follow-up tests use separate prospective families and leave earlier adjustments intact; overlapping source-training populations still constrain inference. Identical update counts do not establish convergence or equal wall-clock compute.
 
 ## Analysis input checks and comparison definitions
