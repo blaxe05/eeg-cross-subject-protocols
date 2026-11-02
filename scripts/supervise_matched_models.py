@@ -19,6 +19,20 @@ def folder_for(root,job):
     return root/'production'/job['model']/job['dataset']/f'seed_{job["seed"]}'/f'target_{job["fold"]["target"]}'/job['arm']
 
 
+def read_worker_status(path):
+    """Keep transient Windows telemetry locks from stopping supervision."""
+    for attempt in range(3):
+        try:
+            return common.read(path)
+        except FileNotFoundError:
+            return {'state':'starting'}
+        except PermissionError:
+            if attempt == 2:
+                return {'state':'status_temporarily_unavailable',
+                        'status_read_error':'PermissionError','status_read_attempts':3}
+            time.sleep(.05 * (attempt + 1))
+
+
 def active_workers(root):
     found={}
     for process in psutil.process_iter(['pid','cmdline','create_time']):
@@ -77,6 +91,10 @@ def main():
         gpu=sum(groups[g][0]['model']!='SVM' for g in live);cpu=sum(groups[g][0]['model']=='SVM' for g in live)
         for group in ordered:
             if group not in remaining or group in live or group in failures:continue
+            # The last result can arrive after the scan and before a worker exits.
+            remaining[group]=[j for j in remaining[group]
+                              if not (folder_for(root,j)/'result.json').exists()]
+            if not remaining[group]:continue
             svm=groups[group][0]['model']=='SVM'
             if svm and cpu>=args.svm_workers:continue
             if not svm and gpu>=args.gpu_workers:continue
@@ -104,7 +122,7 @@ def main():
             status=folder_for(root,job)/'worker_status.json'
             details.append({'group':group,'pid':process.pid,'dataset':job['dataset'],'model':job['model'],
                             'arm':job['arm'],'target':job['fold']['target'],
-                            'worker':common.read(status) if status.exists() else {'state':'starting'}})
+                            'worker':read_worker_status(status)})
         completed_neural=sum(j['model']!='SVM' for j in complete);completed_svm=len(complete)-completed_neural
         progress={'state':'training' if live else ('training_complete' if not remaining else 'needs_attention'),
             'updated_utc_epoch':time.time(),'completed_neural':completed_neural,'planned_neural':specification['supported_neural_paths'],
