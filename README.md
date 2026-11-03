@@ -2,6 +2,44 @@
 
 Code and fixed experiment specifications for controlled evaluation studies in cross-subject EEG emotion recognition on SEED, SEED-IV, FACED and DREAMER. The repository supports reproduction of source-subject allocation, checkpoint selection, target-data access, preprocessing, and subject-level evaluation. Historical DEAP utilities remain for provenance; DEAP quantitative results are excluded from the revised submission because local rating sources could not be independently authenticated. Licensed datasets and previously generated results are not distributed.
 
+Completed matched-model records can be independently replayed on the CPU while
+GPU training continues. Use a separately frozen copy of the verifier and its
+cache helper, with the original worker checkout supplied as the source:
+
+```bash
+python scripts/verify_matched_model_results.py \
+  --output-dir OUTPUT --source-dir FROZEN_WORKER_SOURCE --references REFERENCES \
+  --mode incremental --device cpu --threads 4 \
+  --receipt-dir OUTPUT/prediction_receipts \
+  --stop-file OUTPUT/prediction_receipts/stop_requested \
+  --defer-cpu-mismatches --report OUTPUT/incremental_prediction_verification.json
+```
+
+Incremental mode replays every source-validation and target row at every saved
+candidate for each available record. It prioritizes feature models on the CPU
+and never certifies the whole campaign or authorizes partial outcome analysis.
+Passing receipts bind the frozen inputs, source/reference files, job, verifier
+code, result, selection, arrays and every checkpoint to content hashes.
+CPU prediction mismatches are retained for GPU replay without a passing receipt.
+An OS-held lease prevents duplicate replay processes using the same receipt
+directory. Creating the stop file stops incremental replay between records,
+preserving all completed receipts.
+
+After all supported runs finish, stop/adopt any live replay process and run the
+same frozen verifier in complete mode with the same receipt directory:
+
+```bash
+python scripts/verify_matched_model_results.py \
+  --output-dir OUTPUT --source-dir FROZEN_WORKER_SOURCE --references REFERENCES \
+  --mode complete --device cuda --receipt-dir OUTPUT/prediction_receipts \
+  --report OUTPUT/full_prediction_verification.json
+```
+
+Complete mode rehashes current inputs and artifacts before reusing a full-replay
+receipt, and replays every uncovered record. Missing, changed, sample-only or
+CPU-deferred evidence cannot satisfy the complete-campaign gate. Statistical
+synthesis and final result integration still require that complete proof.
+
 ## Repository contents
 
 - `src/`: dataset interfaces, split/leakage guards, preprocessing, model implementations, and fold-level training and validation code.
