@@ -20,7 +20,8 @@ def fixture_values(tmp_path, model='EEGNet'):
     artifacts = {str(path.resolve()): cache.sha(path)}
     check = {'id': job['id'], 'status': 'pass', 'result_sha256': cache.sha(path)}
     if model == 'SVM':
-        check.update(all_C_choices_and_target_decisions_recomputed=True, C_candidates_verified=2)
+        job['candidate_steps'] = []
+        check.update(all_C_choices_and_target_decisions_recomputed=True, C_candidates_verified=12)
     else:
         check.update(all_candidate_choices_recomputed=True, candidate_states=2,
                      model_predictions_recomputed=100, prediction_replay_scope=cache.REPLAY_SCOPE,
@@ -213,3 +214,12 @@ def test_other_replay_constructors_still_use_frozen_factory(monkeypatch, name, d
         return sentinel
     monkeypatch.setattr(frozen, 'make_model', construct)
     assert verifier.make_replay_model(*arguments) is sentinel
+
+
+@pytest.mark.parametrize('candidate_count', [0, 1, 11, 13, 40])
+def test_SVM_empty_checkpoint_schedule_requires_all_twelve_regularization_fits(tmp_path, candidate_count):
+    context, job, artifacts, check = fixture_values(tmp_path, 'SVM')
+    assert job['candidate_steps'] == []
+    check['C_candidates_verified'] = candidate_count
+    with pytest.raises(ValueError, match='Incomplete SVM'):
+        cache.save_receipt(tmp_path, context, job, artifacts, check, 0)

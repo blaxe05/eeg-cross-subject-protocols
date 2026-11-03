@@ -114,8 +114,9 @@ def validate_check(check, job, artifacts, expected_predictions):
             or check.get('result_sha256') != artifacts[result_paths[0]]):
         raise ValueError('Receipt identity or result digest differs')
     if job['model'] == 'SVM':
+        # Frozen SVM jobs have no neural checkpoint steps; their C grid has 12 fits.
         if (check.get('all_C_choices_and_target_decisions_recomputed') is not True
-                or check.get('C_candidates_verified') != len(job['candidate_steps'])):
+                or check.get('C_candidates_verified') != 12):
             raise ValueError('Incomplete SVM replay receipt')
     elif (check.get('all_candidate_choices_recomputed') is not True
           or check.get('candidate_states') != len(job['candidate_steps'])
