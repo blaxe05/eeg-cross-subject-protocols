@@ -46,6 +46,22 @@ def compare_metrics(y,predicted,reported):
     for name,value in measures(y,predicted).items():assert abs(value-reported[name])<1e-10,(name,value,reported[name])
 
 
+def recompute_checkpoint_choices(scores):
+    """Retain the frozen subject-axis reduction and earliest exact ties.
+
+    Taking a separate mean of each column can change floating-point summation
+    order. Near a tie that can change the selected checkpoint even when every
+    independently reconstructed subject score is identical.
+    """
+    scores=np.asarray(scores)
+    if (scores.ndim!=2 or not all(scores.shape) or not np.isfinite(scores).all()):
+        raise ValueError('Finite nonempty subject-by-candidate scores required')
+    choices=[min(range(scores.shape[1]),key=lambda j:(-scores[i,j],j)) for i in range(len(scores))]
+    pooled_scores=scores.mean(axis=0)
+    pooled=min(range(scores.shape[1]),key=lambda j:(-pooled_scores[j],j))
+    return choices,pooled
+
+
 def compare_trials(labels,values,trials,reported,decision=False):
     actual_y=[];actual_pred=[]
     for trial in np.unique(trials):
@@ -299,8 +315,7 @@ def verify(a,root):
         scores=np.array([[balanced_accuracy_score(bank.y[validation][bank.subject[validation]==s],
                        pred[bank.subject[validation]==s]) for pred in data['validation_predictions']] for s in fold['validation']])
         assert np.allclose(scores,data['validation_bacc'],atol=1e-12)
-        choices=[min(range(scores.shape[1]),key=lambda j:(-scores[i,j],j)) for i in range(len(scores))]
-        pooled=min(range(scores.shape[1]),key=lambda j:(-scores[:,j].mean(),j))
+        choices,pooled=recompute_checkpoint_choices(scores)
         saved=read(folder/'selection.json');assert choices==saved['individual_indices']==record['individual_indices']
         assert pooled==saved['pooled_index']==record['pooled_index'] and not saved['target_labels_used']
         curve=[balanced_accuracy_score(bank.y[target],q.argmax(1)) for q in data['target_probabilities']]
