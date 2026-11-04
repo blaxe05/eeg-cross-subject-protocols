@@ -46,7 +46,8 @@ def recover_case(record, arrays):
     classes = record['classes']
     if record['model'] == 'SVM':
         validation = np.asarray(arrays['validation_bacc'])
-        selected = min(range(validation.shape[1]), key=lambda index: (-validation[:, index].mean(), index))
+        pooled_scores = validation.mean(axis=0)
+        selected = min(range(validation.shape[1]), key=lambda index: (-pooled_scores[index], index))
         if selected != record['pooled_index']:
             raise ValueError('SVM choice differs from equal-subject source selection')
         scores, labels = np.asarray(arrays['target_decision']), arrays['target_labels']
@@ -65,7 +66,10 @@ def recover_case(record, arrays):
                                for predicted in validation_predictions])
         validation = np.array(validation)
         individual = [min(range(validation.shape[1]), key=lambda index: (-row[index], index)) for row in validation]
-        selected = min(range(validation.shape[1]), key=lambda index: (-validation[:, index].mean(), index))
+        # Match the frozen subject-axis reduction, including its floating-point
+        # ordering; separate column means can change a near-tie ranking.
+        pooled_scores = validation.mean(axis=0)
+        selected = min(range(validation.shape[1]), key=lambda index: (-pooled_scores[index], index))
         if (individual != record['individual_indices'] or selected != record['pooled_index']
                 or not np.allclose(validation, arrays['validation_bacc'], atol=1e-12, rtol=0)):
             raise ValueError('Neural choices do not reconstruct from validation predictions')

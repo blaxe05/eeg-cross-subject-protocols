@@ -72,6 +72,41 @@ def test_trial_labels_and_declared_class_support_are_required():
     with pytest.raises(ValueError): trial_values([0, 1], np.eye(2), ['same', 'same'], 2)
 
 
+def test_independent_count_reconstruction_retains_subject_axis_near_ties():
+    # Synthetic class-correct counts for two permutations of the same twelve
+    # values. Reconstructing every subject's confusion counts must retain the
+    # training reduction order instead of averaging each column separately.
+    first=np.array([70,36,23,66,97,2,47,82,13,45,72,99])
+    second=np.array([99,23,2,45,47,36,82,72,13,70,97,66])
+    labels=np.tile(np.repeat([0,1],117),12)
+    subjects=np.repeat([f's{i}' for i in range(12)],234)
+    predictions=np.tile(1-labels,(8,1))
+    for candidate,counts in [(3,first),(7,second)]:
+        for subject,count in enumerate(counts):
+            for label in [0,1]:
+                start=subject*234+label*117
+                predictions[candidate,start:start+count]=label
+    validation=np.zeros((12,8))
+    validation[:,3]=first/117
+    validation[:,7]=second/117
+    target_labels=np.array([0,0,1,1])
+    probability=np.tile(np.eye(2)[1-target_labels],(8,1,1))
+    probability[-1]=np.eye(2)[target_labels]
+    perfect={'balanced_accuracy':1.,'accuracy':1.,'macro_f1':1.}
+    record={'model':'EEGNet','classes':2,'fold':{'validation':[f's{i}' for i in range(12)]},
+            'candidate_steps':list(range(1,9)),'individual_indices':[7,3,3,3,3,7,7,3,3,7,7,3],
+            'pooled_index':7,'target_bacc_curve':[0.]*7+[1.],
+            'final_window':perfect,'pooled_window':perfect,'final_trial':perfect,'pooled_trial':perfect}
+    arrays={'validation_labels':labels,'validation_subjects':subjects,
+            'validation_predictions':predictions,'validation_bacc':validation,
+            'target_probabilities':probability,'target_labels':target_labels,
+            'target_trial':np.array(['a','a','b','b'])}
+    assert min(range(8),key=lambda j:(-validation[:,j].mean(),j))==3
+    recovered=recover_case(record,arrays)
+    assert recovered['outcomes']['pooled_window']==perfect
+    assert recovered['effects']['pooled_selected_minus_final_pp']==0.
+
+
 def test_separate_comparison_inventory_reconstructs_every_supported_matrix():
     from test_common_input_synthesis import synthetic_records, design
     from analyze_common_input_models import build_comparisons
